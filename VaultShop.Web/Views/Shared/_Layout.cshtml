@@ -42,7 +42,7 @@
 		var description = GetViewDataText("Description");
 		var keywords = GetViewDataText("Keywords");
 		var robots = GetViewDataText("Robots");
-		var ogImage = GetViewDataText("OgImage");
+		var ogImage = GetViewDataText("OgImage") ?? $"{SD.SiteUrl}{branding.SocialPreviewImagePath}";
 	}
 	<title>@fullTitle</title>
 	<meta name="description" content="@description" />

@@ -43,6 +43,26 @@ public class CartCheckoutHttpTests
     }
 
     [Fact]
+    public async Task Home_RendersOgImageFromConfiguredSocialPreview()
+    {
+        using var factory = new CustomWebApplicationFactory();
+        using var configuredFactory = factory.WithWebHostBuilder(builder =>
+            builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Branding:SocialPreviewImagePath"] = "/images/brand/private/ukiyostudio-social-preview.png",
+            })));
+        var client = configuredFactory.CreateClient();
+
+        var response = await client.GetAsync("/en-US/Customer/Home/Index");
+        var html = await response.Content.ReadAsStringAsync();
+
+        var expected = $"{SD.SiteUrl}/images/brand/private/ukiyostudio-social-preview.png";
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains($"<meta property=\"og:image\" content=\"{expected}\"", html);
+        Assert.Contains($"<meta name=\"twitter:image\" content=\"{expected}\"", html);
+    }
+
+    [Fact]
     public async Task Summary_WithDemoNoticeDisabled_DoesNotRenderDemoNotice()
     {
         using var factory = new CustomWebApplicationFactory();
