@@ -374,7 +374,7 @@ FodyWeavers.xsd
 .env.*.local
 .env.compose
 .platform.env
-
+ukiyo.env.compose
 # OpenCode AI tools
 .agents/
 .claude/
@@ -385,6 +385,7 @@ skills-lock.json
 # Local project context for AI-assisted development
 PROJECT_CONTEXT.local.md
 .local/
+.playwright-mcp/
 plans/
 docs/portfolio-copy.md
 CLAUDE.md
