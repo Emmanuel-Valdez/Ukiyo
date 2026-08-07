@@ -250,6 +250,7 @@ Install/update the scripts on the VPS:
 
 ```
 cd /opt/vaultshop
+mkdir -p ~/vaultshop-backups ~/ukiyostudio-backups
 install -m 755 docs/operations/do-backup.sh ~/vaultshop-backups/do-backup.sh
 install -m 755 docs/operations/do-backup.sh ~/ukiyostudio-backups/do-backup.sh
 install -m 755 docs/operations/check-backup-freshness.sh ~/vaultshop-backups/check-backup-freshness.sh
