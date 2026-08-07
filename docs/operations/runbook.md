@@ -1,17 +1,22 @@
-﻿# VaultShop Operations Runbook
+# VaultShop Operations Runbook
 
 This runbook documents the current lightweight operations process for the VaultShop VPS deployment. It is intentionally simple: the goal is to keep the public demo recoverable and explainable without over-engineering.
 
 ## Deployment Shape
 
-- Public URL: `https://vaultshop.evaldez.ar`
+Two independent web deployments share one private platform (PostgreSQL + MinIO) on the same VPS:
+
+| Store | Domain | App path | Web bind | Database | MinIO bucket | Backup dir |
+| --- | --- | --- | --- | --- | --- | --- |
+| VaultShop (demo) | `https://vaultshop.evaldez.ar` | `/opt/vaultshop` | `127.0.0.1:8080` | `vaultshop` | `product-images` | `~/vaultshop-backups/` |
+| UkiyoStudio | `https://ukiyostudio.evaldez.ar` | `/opt/ukiyostudio` | `127.0.0.1:8083` | `ukiyostudio` | `ukiyostudio-images` | `~/ukiyostudio-backups/` |
+
 - VPS OS: Ubuntu 24.04
-- App path on VPS: `/opt/vaultshop`
 - Public ingress: Nginx on `80/443`
-- App container bind: `127.0.0.1:8080`
-- PostgreSQL: Docker Compose private service
-- MinIO: Docker Compose private service, served publicly through Nginx for product images
+- PostgreSQL: Docker Compose private service (no host port)
+- MinIO: Docker Compose private service, API bound to loopback `127.0.0.1:9000`, served publicly through Nginx for product images
 - SSH/admin access: Tailscale/private access
+- Real database/user/bucket names live in the private `/opt/vaultshop/.platform.env`; the backup scripts read them automatically, manual commands below use placeholders.
 
 Do not expose PostgreSQL, MinIO API, or the MinIO console directly to the public internet.
 
@@ -21,15 +26,18 @@ Run on the VPS:
 
 ```
 cd /opt/vaultshop
-docker compose --env-file .env.compose ps
+docker compose --env-file /opt/vaultshop/.platform.env -f docker-compose.platform.yml ps
+docker compose --env-file /opt/vaultshop/.env.compose -f docker-compose.store.yml ps
+docker compose --env-file /opt/ukiyostudio/.env.compose -f docker-compose.store.yml ps
 curl -I https://vaultshop.evaldez.ar
+curl -I https://ukiyostudio.evaldez.ar
 df -h
 ```
 
 Expected result:
 
-- App, PostgreSQL, and MinIO containers are running.
-- `curl` returns a successful HTTP response, redirect, or otherwise valid HTTPS response.
+- Platform (postgres, minio) and both store web containers are running.
+- Both `curl` calls return successful HTTPS responses.
 - Disk usage is not close to full.
 
 ## Restart Recovery Check
@@ -40,38 +48,49 @@ Verify from the VPS repo root:
 
 ```
 cd /opt/vaultshop
-docker compose --env-file .env.compose ps web postgres minio
-docker compose --env-file .env.compose ps -q web postgres minio | xargs -r docker inspect --format '{{.Name}} {{.HostConfig.RestartPolicy.Name}}'
+docker compose --env-file /opt/vaultshop/.platform.env -f docker-compose.platform.yml ps
+docker ps --format '{{.Names}} {{.HostConfig.RestartPolicy.Name}}' | grep -E '(postgres|minio|-web)'
 ```
 
 Expected:
 
-- Web, PostgreSQL, and MinIO are running.
+- Platform and both store web containers are running.
 - Each inspected container reports `unless-stopped`.
-- Container names follow the active `COMPOSE_PROJECT_NAME`; keep that name stable after first deployment so volumes do not silently change.
+- Container names follow the stable Compose project names (`vaultshop-platform`, `vaultshop`, `ukiyostudio`); keep them stable after first deployment so volumes do not silently change.
 
 After a VPS reboot:
 
 ```
 cd /opt/vaultshop
-docker compose --env-file .env.compose ps
+docker compose --env-file /opt/vaultshop/.platform.env -f docker-compose.platform.yml ps
+docker compose --env-file /opt/vaultshop/.env.compose -f docker-compose.store.yml ps
+docker compose --env-file /opt/ukiyostudio/.env.compose -f docker-compose.store.yml ps
 curl -I https://vaultshop.evaldez.ar
+curl -I https://ukiyostudio.evaldez.ar
 ```
 
-Then verify manually in the browser that product pages and uploaded images still load.
+Then verify manually in the browser that both stores' product pages and uploaded images still load.
 
 ## PostgreSQL Backup
 
-Create a compressed custom-format PostgreSQL dump on the VPS:
+The platform compose runs PostgreSQL without a host port, so dump from inside the `postgres` container. Each store dumps only its own database into a separate file under its own backup dir.
+
+The `postgres` container is created by the postgres image with `POSTGRES_USER` as the cluster superuser, so that single credential can dump any database on the server. `<db_name>` below is the store's real database name from `/opt/vaultshop/.platform.env` (`POSTGRES_DB` for VaultShop, `UKIYO_POSTGRES_DATABASE` for UkiyoStudio).
+
+Manual, per store:
 
 ```
-mkdir -p ~/vaultshop-backups/postgres
+mkdir -p ~/vaultshop-backups/postgres ~/ukiyostudio-backups/postgres
 cd /opt/vaultshop
-docker compose --env-file .env.compose exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > ~/vaultshop-backups/postgres/vaultshop_$(date +%F_%H%M).dump
-ls -lh ~/vaultshop-backups/postgres
+docker compose --env-file /opt/vaultshop/.platform.env -f docker-compose.platform.yml \
+  exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "<db_name>" -Fc' \
+  > ~/<store>-backups/postgres/<store>_$(date +%F_%H%M).dump
+ls -lh ~/<store>-backups/postgres
 ```
 
-Copy it to the local PC from PowerShell:
+Prefer `do-backup.sh <store>` (see Automated Backup) — it reads the real names from `.platform.env` and produces both files for the store.
+
+Copy VaultShop dumps to the local PC from PowerShell:
 
 ```powershell
 mkdir ~/Backups/VaultShop/Postgres
@@ -79,97 +98,114 @@ scp ubuntu@<vps-tailscale-ip>:/home/ubuntu/vaultshop-backups/postgres/*.dump ~/B
 dir ~/Backups/VaultShop/Postgres
 ```
 
+Copy UkiyoStudio dumps the same way, own dir and own files:
+
+```powershell
+mkdir ~/Backups/UkiyoStudio/Postgres
+scp ubuntu@<vps-tailscale-ip>:/home/ubuntu/ukiyostudio-backups/postgres/*.dump ~/Backups/UkiyoStudio/Postgres/
+dir ~/Backups/UkiyoStudio/Postgres
+```
+
 Success criteria:
 
-- The `.dump` file exists locally.
-- File size is not `0`.
-- Restore has been tested at least once after changing the backup process.
+- One `.dump` file per store exists locally, from the matching store's backup dir.
+- File sizes are not `0`.
+- Each store's restore has been tested at least once after changing the backup process (see below).
 
 ## PostgreSQL Restore Test
 
-Start a clean local PostgreSQL container:
+Restore each store's dump into its own clean container so the two stores stay independent. The dump records each object's original owner role, so restore with `--no-owner` in the throwaway container to avoid role-mismatch failures.
+
+Start a clean local PostgreSQL container per store:
 
 ```powershell
 docker rm -f vaultshop-restore-postgres
 docker run --name vaultshop-restore-postgres -e POSTGRES_USER=vaultshop_app -e POSTGRES_PASSWORD=restoretest -e POSTGRES_DB=vaultshop_restore -p 55432:5432 -d postgres:16
+
+docker rm -f ukiyostudio-restore-postgres
+docker run --name ukiyostudio-restore-postgres -e POSTGRES_USER=ukiyostudio_restore -e POSTGRES_PASSWORD=restoretest -e POSTGRES_DB=ukiyostudio_restore -p 55433:5432 -d postgres:16
 ```
 
-Copy the dump into the container:
+Copy each dump into its own container:
 
 ```powershell
 docker cp ~/Backups/VaultShop/Postgres/vaultshop_YYYY-MM-DD_HHMM.dump vaultshop-restore-postgres:/backup.dump
+docker cp ~/Backups/UkiyoStudio/Postgres/ukiyostudio_YYYY-MM-DD_HHMM.dump ukiyostudio-restore-postgres:/backup.dump
 ```
 
 Restore:
 
 ```powershell
-docker exec vaultshop-restore-postgres pg_restore -U vaultshop_app -d vaultshop_restore /backup.dump
+docker exec vaultshop-restore-postgres pg_restore --no-owner -U vaultshop_app -d vaultshop_restore /backup.dump
+docker exec ukiyostudio-restore-postgres pg_restore --no-owner -U ukiyostudio_restore -d ukiyostudio_restore /backup.dump
 ```
 
-Verify tables:
+Verify each restored database holds only its own store's expected tables and data:
 
 ```powershell
 docker exec vaultshop-restore-postgres psql -U vaultshop_app -d vaultshop_restore -c "\dt"
-```
-
-Verify counts, preserving PostgreSQL's quoted table names through the container shell:
-
-```powershell
 docker exec vaultshop-restore-postgres sh -c 'psql -U vaultshop_app -d vaultshop_restore -c "SELECT COUNT(*) FROM \"Products\";"'
-docker exec vaultshop-restore-postgres sh -c 'psql -U vaultshop_app -d vaultshop_restore -c "SELECT COUNT(*) FROM \"ProductImages\";"'
-docker exec vaultshop-restore-postgres sh -c 'psql -U vaultshop_app -d vaultshop_restore -c "SELECT COUNT(*) FROM \"AspNetUsers\";"'
+docker exec ukiyostudio-restore-postgres psql -U ukiyostudio_restore -d ukiyostudio_restore -c "\dt"
 ```
 
-Important: PostgreSQL restores can depend on roles/owners. If the dump contains objects owned by `vaultshop_app`, create the restore database with `POSTGRES_USER=vaultshop_app` or restore with appropriate ownership options.
+Independence check: `\dt` in the VaultShop container must show only VaultShop data and nothing belonging to UkiyoStudio, and vice versa.
+
+Important: PostgreSQL restores depend on roles/owners. The `--no-owner` flag above is for throwaway containers. A production restore onto the real server should recreate the store's real owner role first (the dumps carry ownership references, not role definitions) or else use `--no-owner`.
 
 ## MinIO Backup
 
-Keep `COMPOSE_PROJECT_NAME=vaultshop` stable after first deployment. With that project name, the MinIO Docker volume is `vaultshop_minio-data`. If the project name is changed, use the matching `<project>_minio-data` volume instead.
+MinIO runs on the shared network with the API bound to loopback `127.0.0.1:9000` and holds both stores' buckets in one data volume, so back each bucket up separately with `mc mirror` instead of tarring the whole volume. Each store backs up with its own scoped MinIO user (`VAULTSHOP_MINIO_USER`/`UKIYO_MINIO_USER` and their passwords from `.platform.env`), never root — a scoped user can only read its own bucket, so a store's backup can never pull the other store's objects.
 
-Verify volumes:
-
-```
-docker volume ls | grep minio-data
-```
-
-Create a read-only archive of the MinIO data volume:
+Manual, from the VPS (the backup dir is mounted read-write so `mc` can write the mirror):
 
 ```
-mkdir -p ~/vaultshop-backups/minio
-docker run --rm -v vaultshop_minio-data:/data:ro -v ~/vaultshop-backups/minio:/backup alpine tar czf /backup/minio_$(date +%F_%H%M).tar.gz -C /data .
-ls -lh ~/vaultshop-backups/minio
-tar tzf ~/vaultshop-backups/minio/*.tar.gz | head
+mkdir -p ~/vaultshop-backups/minio ~/ukiyostudio-backups/minio
+docker run --rm --network host -v ~/<store>-backups/minio:/backup \
+  -e MINIO_USER="<store minio user>" -e MINIO_PASSWORD="<store minio password>" \
+  -e BUCKET_NAME="<store bucket>" minio/mc:latest sh -ec '
+    mc alias set local http://127.0.0.1:9000 "$MINIO_USER" "$MINIO_PASSWORD" >/dev/null
+    mc mirror --overwrite "local/$BUCKET_NAME" "/backup/$BUCKET_NAME"
+  '
+tar czf ~/<store>-backups/minio/<bucket>_$(date +%F_%H%M).tar.gz -C ~/<store>-backups/minio <bucket>
+rm -rf ~/<store>-backups/minio/<bucket>
+ls -lh ~/<store>-backups/minio
 ```
 
-Copy it to the local PC from PowerShell:
+The archive keeps the bucket name as its top-level directory, so extracting it into a MinIO data volume recreates that bucket (see MinIO Restore Test below).
+
+Prefer `do-backup.sh <store>` — it does the mirror and the archive in one step, reading names and credentials from `.platform.env`.
+
+Copy each store's archives to the local PC from PowerShell:
 
 ```powershell
 mkdir ~/Backups/VaultShop/MinIO
 scp ubuntu@<vps-tailscale-ip>:/home/ubuntu/vaultshop-backups/minio/*.tar.gz ~/Backups/VaultShop/MinIO/
-dir ~/Backups/VaultShop/MinIO
+mkdir ~/Backups/UkiyoStudio/MinIO
+scp ubuntu@<vps-tailscale-ip>:/home/ubuntu/ukiyostudio-backups/minio/*.tar.gz ~/Backups/UkiyoStudio/MinIO/
+dir ~/Backups/VaultShop/MinIO; dir ~/Backups/UkiyoStudio/MinIO
 ```
 
 Success criteria:
 
-- The `.tar.gz` file exists locally.
-- File size is not `0`.
-- Archive contents can be listed with `tar tzf`.
+- One `.tar.gz` per store exists locally, from the matching store's backup dir.
+- File sizes are not `0`.
+- `tar tzf` of each archive lists only that store's bucket directory.
 
 ## MinIO Restore Test
 
-Create a clean local Docker volume:
+Each store's archive extracts to `<bucket>/...` inside its data volume, which MinIO then exposes as a bucket with that name.
+
+Create clean local Docker volumes per store, then extract:
 
 ```powershell
 docker volume create vaultshop-restore-minio-data
+docker run --rm -v vaultshop-restore-minio-data:/data -v ~/Backups/VaultShop/MinIO:/backup alpine sh -c "tar xzf /backup/product-images_YYYY-MM-DD_HHMM.tar.gz -C /data"
+
+docker volume create ukiyostudio-restore-minio-data
+docker run --rm -v ukiyostudio-restore-minio-data:/data -v ~/Backups/UkiyoStudio/MinIO:/backup alpine sh -c "tar xzf /backup/ukiyostudio-images_YYYY-MM-DD_HHMM.tar.gz -C /data"
 ```
 
-Restore the archive into the clean volume:
-
-```powershell
-docker run --rm -v vaultshop-restore-minio-data:/data -v ~/Backups/VaultShop/MinIO:/backup alpine sh -c "tar xzf /backup/minio_YYYY-MM-DD_HHMM.tar.gz -C /data"
-```
-
-Start a temporary local MinIO instance:
+Start a temporary local MinIO instance per store:
 
 ```powershell
 docker run --name vaultshop-restore-minio -p 9100:9000 -p 9101:9001 -v vaultshop-restore-minio-data:/data -e MINIO_ROOT_USER=restoreadmin -e MINIO_ROOT_PASSWORD=restorepassword minio/minio server /data --console-address ":9001"
@@ -188,11 +224,14 @@ User: restoreadmin
 Password: restorepassword
 ```
 
+Independence check: the VaultShop instance must expose only the `product-images` bucket (and vice versa with `ukiyostudio-images`). If boundary-crossing object keys appear in either archive, the store separation is broken.
+
 Success criteria:
 
 - MinIO starts.
 - The restored bucket exists.
 - Product image objects are visible.
+- The VaultShop archive contains no UkiyoStudio objects and vice versa.
 
 Clean up when finished:
 
@@ -201,86 +240,62 @@ docker rm -f vaultshop-restore-minio
 docker volume rm vaultshop-restore-minio-data
 ```
 
+Repeat cleanup for the UkiyoStudio container and volume.
+
 ## Automated Backup Freshness And Disk Checks
 
-Two scripts live in `~/vaultshop-backups/` on the VPS and should run daily via cron.
+Source scripts live in `docs/operations/` in the repo and are installed on the VPS at `~/vaultshop-backups/` and `~/ukiyostudio-backups/`. `do-backup.sh <store>` and `check-backup-freshness.sh <store> [hours]` are store-parametric: the same files (copied to both backup dirs) back up only their own store's database and bucket, using only that store's scoped MinIO user — a VaultShop backup can never read UkiyoStudio objects and vice versa. VaultShop (demo) backs up weekly; UkiyoStudio (production) backs up daily.
+
+Install/update the scripts on the VPS:
+
+```
+cd /opt/vaultshop
+install -m 755 docs/operations/do-backup.sh ~/vaultshop-backups/do-backup.sh
+install -m 755 docs/operations/do-backup.sh ~/ukiyostudio-backups/do-backup.sh
+install -m 755 docs/operations/check-backup-freshness.sh ~/vaultshop-backups/check-backup-freshness.sh
+install -m 755 docs/operations/check-backup-freshness.sh ~/ukiyostudio-backups/check-backup-freshness.sh
+install -m 755 docs/operations/check-disk.sh ~/vaultshop-backups/check-disk.sh
+```
+
+### do-backup.sh
+
+Usage: `do-backup.sh <vaultshop|ukiyostudio>`.
+
+Reads the real database, bucket, and scoped MinIO user/password names from `/opt/vaultshop/.platform.env` (no secrets in the repo), then:
+
+1. Dumps the store's database with `pg_dump -Fc` through the platform `postgres` container into `~/<store>-backups/postgres/<store>_<date>.dump`.
+2. Mirrors the store's bucket with `mc mirror`, run inside a throwaway `minio/mc` container against the loopback-bound MinIO API `127.0.0.1:9000`, then archives it as `~/<store>-backups/minio/<bucket>_<date>.tar.gz`.
+3. Deletes artifacts older than 60 days.
+
+Expected output (healthy):
+
+```
+[2026-08-04 06:32] === ukiyostudio Backup ===
+[06:32] PostgreSQL dump (ukiyostudio)...
+OK:   3.1M
+[06:32] MinIO bucket mirror (ukiyostudio-images)...
+OK:   1.2M
+[2026-08-04 06:32] ukiyostudio backup complete
+```
 
 ### check-backup-freshness.sh
 
-Verifies the latest PostgreSQL dump and MinIO archive exist and are newer than a threshold (default: 48 hours).
+Usage: `check-backup-freshness.sh <vaultshop|ukiyostudio> [max-age-hours]`.
 
-```
-#!/usr/bin/env bash
-set -euo pipefail
-
-BACKUP_DIR="$HOME/vaultshop-backups"
-MAX_AGE_HOURS="${1:-48}"
-THRESHOLD_SECONDS=$((MAX_AGE_HOURS * 3600))
-EXIT_CODE=0
-
-echo "=== Backup Freshness Check ==="
-echo "Max age: ${MAX_AGE_HOURS}h"
-echo ""
-
-# --- PostgreSQL ---
-PG_DIR="$BACKUP_DIR/postgres"
-if [ ! -d "$PG_DIR" ]; then
-    echo "FAIL: PostgreSQL backup dir '$PG_DIR' not found"
-    EXIT_CODE=1
-else
-    LATEST_PG=$(ls -t "$PG_DIR"/*.dump 2>/dev/null | head -1)
-    if [ -z "$LATEST_PG" ]; then
-        echo "FAIL: No PostgreSQL dump found in $PG_DIR"
-        EXIT_CODE=1
-    else
-        AGE=$(($(date +%s) - $(stat -c %Y "$LATEST_PG")))
-        AGE_HOURS=$((AGE / 3600))
-        if [ "$AGE" -le "$THRESHOLD_SECONDS" ]; then
-            echo "OK:   PostgreSQL dump is ${AGE_HOURS}h old ($(basename "$LATEST_PG"))"
-        else
-            echo "FAIL: PostgreSQL dump is ${AGE_HOURS}h old (max ${MAX_AGE_HOURS}h) ($(basename "$LATEST_PG"))"
-            EXIT_CODE=1
-        fi
-    fi
-fi
-
-# --- MinIO ---
-MINIO_DIR="$BACKUP_DIR/minio"
-if [ ! -d "$MINIO_DIR" ]; then
-    echo "FAIL: MinIO backup dir '$MINIO_DIR' not found"
-    EXIT_CODE=1
-else
-    LATEST_MINIO=$(ls -t "$MINIO_DIR"/*.tar.gz 2>/dev/null | head -1)
-    if [ -z "$LATEST_MINIO" ]; then
-        echo "FAIL: No MinIO archive found in $MINIO_DIR"
-        EXIT_CODE=1
-    else
-        AGE=$(($(date +%s) - $(stat -c %Y "$LATEST_MINIO")))
-        AGE_HOURS=$((AGE / 3600))
-        if [ "$AGE" -le "$THRESHOLD_SECONDS" ]; then
-            echo "OK:   MinIO archive is ${AGE_HOURS}h old ($(basename "$LATEST_MINIO"))"
-        else
-            echo "FAIL: MinIO archive is ${AGE_HOURS}h old (max ${MAX_AGE_HOURS}h) ($(basename "$LATEST_MINIO"))"
-            EXIT_CODE=1
-        fi
-    fi
-fi
-
-echo ""
-echo "Exit code: $EXIT_CODE"
-exit $EXIT_CODE
-```
+Checks that the store's newest PostgreSQL dump and MinIO archive exist and are newer than the threshold (default: 48 hours; cron passes `168` for VaultShop's weekly backup and `48` for UkiyoStudio's daily backup). Exits `0` when both pass, `1` when either is missing or stale.
 
 Expected output (healthy):
+
 ```
-=== Backup Freshness Check ===
+=== Backup Freshness Check (vaultshop) ===
 Max age: 168h
 
-OK:   PostgreSQL dump is 0h old (vaultshop_2026-07-06_0432.dump)
-OK:   MinIO archive is 0h old (minio_2026-07-06_0432.tar.gz)
+OK:   PostgreSQL dump is 0h old (vaultshop_2026-08-04_0632.dump)
+OK:   MinIO archive is 0h old (product-images_2026-08-04_0632.tar.gz)
 
 Exit code: 0
 ```
+
 ### check-disk.sh
 
 Reports disk usage and warns above configurable thresholds.
@@ -332,7 +347,8 @@ Exit code: 0
 
 ### Cron Setup
 
-Run the backup weekly (Sunday 6:00) and both checks daily:
+VaultShop (demo) backs up weekly on Sunday 6:00; UkiyoStudio (production) backs up daily. Both freshness checks and the disk check run daily.
+
 ```bash
 crontab -e
 ```
@@ -340,53 +356,63 @@ crontab -e
 Add:
 
 ```cron
-# Weekly backup (Sunday 6:00)
-0 6 * * 0 $HOME/vaultshop-backups/do-backup.sh >> $HOME/vaultshop-backups/checks.log 2>&1
-# Daily freshness check (uses 168h threshold for weekly backups)
-5 6 * * * $HOME/vaultshop-backups/check-backup-freshness.sh 168 >> $HOME/vaultshop-backups/checks.log 2>&1
+# VaultShop weekly backup (Sunday 6:00)
+0 6 * * 0 $HOME/vaultshop-backups/do-backup.sh vaultshop >> $HOME/vaultshop-backups/checks.log 2>&1
+# UkiyoStudio daily backup
+30 6 * * * $HOME/ukiyostudio-backups/do-backup.sh ukiyostudio >> $HOME/ukiyostudio-backups/checks.log 2>&1
+# Daily freshness checks (168h for weekly VaultShop, 48h for daily UkiyoStudio)
+5 6 * * * $HOME/vaultshop-backups/check-backup-freshness.sh vaultshop 168 >> $HOME/vaultshop-backups/checks.log 2>&1
+35 6 * * * $HOME/ukiyostudio-backups/check-backup-freshness.sh ukiyostudio 48 >> $HOME/ukiyostudio-backups/checks.log 2>&1
 # Daily disk check
 10 6 * * * $HOME/vaultshop-backups/check-disk.sh >> $HOME/vaultshop-backups/checks.log 2>&1
 ```
 ```bash
 tail -20 ~/vaultshop-backups/checks.log
+tail -20 ~/ukiyostudio-backups/checks.log
 ```
 
 Success criteria:
 
 - Each script exits `0` when checks pass.
 - Non-zero exit codes appear in the log and indicate what failed.
-- The cron job runs daily without manual intervention.
-- Check the log after the first cron execution to confirm output is correct.
+- Both cron jobs (VaultShop weekly, UkiyoStudio daily) run without manual intervention.
+- Check the logs after the first cron execution of each store to confirm output is correct.
 
 ### Container Restart Detection
 
-Quick check for unexpected container restarts:
+Quick check for unexpected container restarts (platform first, then each store):
 
 ```
 cd /opt/vaultshop
-docker compose --env-file .env.compose ps -a
-docker compose --env-file .env.compose logs --tail=20 --timestamps web postgres minio | grep -i "restart\|error\|warn\|killed\|oom"
+docker compose --env-file /opt/vaultshop/.platform.env -f docker-compose.platform.yml ps -a
+docker compose --env-file /opt/vaultshop/.platform.env -f docker-compose.platform.yml logs --tail=20 --timestamps postgres minio | grep -i "restart\|error\|warn\|killed\|oom"
+docker compose --env-file /opt/vaultshop/.env.compose -f docker-compose.store.yml ps -a
+docker compose --env-file /opt/vaultshop/.env.compose -f docker-compose.store.yml logs --tail=20 --timestamps web | grep -i "restart\|error\|warn\|killed\|oom"
+docker compose --env-file /opt/ukiyostudio/.env.compose -f docker-compose.store.yml ps -a
+docker compose --env-file /opt/ukiyostudio/.env.compose -f docker-compose.store.yml logs --tail=20 --timestamps web | grep -i "restart\|error\|warn\|killed\|oom"
 ```
 
 Look for containers with unexpected exit codes or recent restart timestamps. This is a manual check for now; automated alerting can be added if restarts become frequent.
 
 ### Webhook Error Visibility
 
-Stripe webhook errors appear in the app logs:
+Stripe webhook errors appear in each store's app logs:
 
 ```
 cd /opt/vaultshop
-docker compose --env-file .env.compose logs --tail=100 web | grep -i "webhook\|stripe.*fail\|signature\|400\|401\|403"
+docker compose --env-file /opt/vaultshop/.env.compose -f docker-compose.store.yml logs --tail=100 web | grep -i "webhook\|stripe.*fail\|signature\|400\|401\|403"
+docker compose --env-file /opt/ukiyostudio/.env.compose -f docker-compose.store.yml logs --tail=100 web | grep -i "webhook\|stripe.*fail\|signature\|400\|401\|403"
 ```
 
 Expected: no matching lines on a healthy system. If errors appear, check the Stripe Dashboard webhook logs for recent attempts.
 
 ## Monitoring
 
-An external uptime/TLS monitor should check:
+An external uptime/TLS monitor should check both stores:
 
 ```text
 https://vaultshop.evaldez.ar
+https://ukiyostudio.evaldez.ar
 ```
 
 Minimum expectations:
@@ -399,23 +425,20 @@ This detects basic availability problems. It does not replace backup/restore or 
 
 ## Logs
 
-App logs:
+App logs (each store):
 
 ```
 cd /opt/vaultshop
-docker compose --env-file .env.compose logs --tail=100 web
+docker compose --env-file /opt/vaultshop/.env.compose -f docker-compose.store.yml logs --tail=100 web
+docker compose --env-file /opt/ukiyostudio/.env.compose -f docker-compose.store.yml logs --tail=100 web
 ```
 
-PostgreSQL logs:
+Platform logs (shared):
 
 ```
-docker compose --env-file .env.compose logs --tail=100 postgres
-```
-
-MinIO logs:
-
-```
-docker compose --env-file .env.compose logs --tail=100 minio
+cd /opt/vaultshop
+docker compose --env-file /opt/vaultshop/.platform.env -f docker-compose.platform.yml logs --tail=100 postgres
+docker compose --env-file /opt/vaultshop/.platform.env -f docker-compose.platform.yml logs --tail=100 minio
 ```
 
 Nginx status and recent logs:
@@ -430,31 +453,29 @@ sudo journalctl -u nginx --since "1 hour ago" --no-pager
 Do not run this on the VPS unless intentionally deleting persisted data:
 
 ```
-docker compose down -v
+docker compose --env-file /opt/vaultshop/.platform.env -f docker-compose.platform.yml down -v
 ```
 
-The `-v` flag deletes Docker volumes, including PostgreSQL and MinIO data.
+The `-v` flag deletes Docker volumes, including the shared PostgreSQL and MinIO data — both stores at once.
 
 Use this to stop containers without deleting data:
 
 ```
-docker compose --env-file .env.compose down
+cd /opt/vaultshop
+docker compose --env-file /opt/vaultshop/.platform.env -f docker-compose.platform.yml down
+docker compose --env-file /opt/vaultshop/.env.compose -f docker-compose.store.yml down
+docker compose --env-file /opt/ukiyostudio/.env.compose -f docker-compose.store.yml down
 ```
 
 ## Future Private Deployment Notes
 
-VaultShop is the public portfolio/demo deployment. A future private/client deployment should use the same general pattern but with stronger separation:
+UkiyoStudio already follows the two-store pattern above: shared platform (PostgreSQL + MinIO), separate store stacks (web + env + compose project + domain), separate database/bucket/scoped credentials, separate backups. A future private/client deployment should do the same, plus:
 
-- Separate domain/subdomain.
-- Separate `.env` file.
-- Separate Compose project name/volumes, kept stable after first deployment.
-- Separate PostgreSQL database and user.
-- Separate MinIO bucket and app-specific credentials.
-- Separate Stripe keys and webhook secret.
-- Separate backups and restore verification.
 - No demo seed data in the real client deployment.
 - Private branding assets configured through `Branding__...` and stored outside git.
 - Separate `Theme__...` hex color values for the deployment.
+- Its own backup dir, cron lines, and restore tests (copy `do-backup.sh`/`check-backup-freshness.sh` with the new store name).
+- If the client needs full isolation (own VM or Kubernetes), the shared platform pattern does not apply — use separate infrastructure instead.
 
 
 
