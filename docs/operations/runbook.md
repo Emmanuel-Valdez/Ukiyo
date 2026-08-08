@@ -196,22 +196,27 @@ Success criteria:
 
 ## MinIO Restore Test
 
-Each store's archive extracts to `<bucket>/...` inside its data volume, which MinIO then exposes as a bucket with that name.
+Restore by uploading the archive contents through the S3 API with `mc mirror`, so MinIO writes its own per-object metadata (modern MinIO uses the XL format and will not index files extracted directly into the data volume).
 
-Create clean local Docker volumes per store, then extract:
+Create clean local Docker volumes, extract each archive to a temp dir, and start a temporary local MinIO instance per store:
 
 ```powershell
 docker volume create vaultshop-restore-minio-data
-docker run --rm -v vaultshop-restore-minio-data:/data -v $HOME\Backups\VaultShop\MinIO:/backup alpine sh -c "tar xzf /backup/product-images_YYYY-MM-DD_HHMM.tar.gz -C /data"
+docker run -d --name vaultshop-restore-minio -p 9100:9000 -p 9101:9001 -v vaultshop-restore-minio-data:/data -e MINIO_ROOT_USER=restoreadmin -e MINIO_ROOT_PASSWORD=restorepassword minio/minio server /data --console-address ":9001"
+mkdir C:\vaultshop-restore-tmp
+tar xzf $HOME\Backups\VaultShop\MinIO\product-images_YYYY-MM-DD_HHMM.tar.gz -C C:\vaultshop-restore-tmp
 
 docker volume create ukiyostudio-restore-minio-data
-docker run --rm -v ukiyostudio-restore-minio-data:/data -v $HOME\Backups\UkiyoStudio\MinIO:/backup alpine sh -c "tar xzf /backup/ukiyostudio-images_YYYY-MM-DD_HHMM.tar.gz -C /data"
+docker run -d --name ukiyostudio-restore-minio -p 9102:9000 -p 9103:9001 -v ukiyostudio-restore-minio-data:/data -e MINIO_ROOT_USER=restoreadmin -e MINIO_ROOT_PASSWORD=restorepassword minio/minio server /data --console-address ":9001"
+mkdir C:\ukiyostudio-restore-tmp
+tar xzf $HOME\Backups\UkiyoStudio\MinIO\ukiyostudio-images_YYYY-MM-DD_HHMM.tar.gz -C C:\ukiyostudio-restore-tmp
 ```
 
-Start a temporary local MinIO instance per store:
+Upload each store's files into its bucket (this creates the bucket and the objects via the API):
 
 ```powershell
-docker run --name vaultshop-restore-minio -p 9100:9000 -p 9101:9001 -v vaultshop-restore-minio-data:/data -e MINIO_ROOT_USER=restoreadmin -e MINIO_ROOT_PASSWORD=restorepassword minio/minio server /data --console-address ":9001"
+docker run --rm --network host -v C:\vaultshop-restore-tmp:/src -e MC_CONFIG_DIR=/tmp/mc --entrypoint sh minio/mc:latest -ec "mc alias set local http://127.0.0.1:9100 restoreadmin restorepassword >/dev/null && mc mb local/product-images && mc mirror --overwrite /src/product-images local/product-images"
+docker run --rm --network host -v C:\ukiyostudio-restore-tmp:/src -e MC_CONFIG_DIR=/tmp/mc --entrypoint sh minio/mc:latest -ec "mc alias set local http://127.0.0.1:9102 restoreadmin restorepassword >/dev/null && mc mb local/ukiyostudio-images && mc mirror --overwrite /src/ukiyostudio-images local/ukiyostudio-images"
 ```
 
 Open:
@@ -241,9 +246,10 @@ Clean up when finished:
 ```powershell
 docker rm -f vaultshop-restore-minio
 docker volume rm vaultshop-restore-minio-data
+Remove-Item -Recurse -Force C:\vaultshop-restore-tmp
 ```
 
-Repeat cleanup for the UkiyoStudio container and volume.
+Repeat cleanup for the UkiyoStudio container, volume, and temp dir (`ukiyostudio-restore-minio`, `ukiyostudio-restore-minio-data`, `C:\ukiyostudio-restore-tmp`).
 
 ## Automated Backup Freshness And Disk Checks
 
