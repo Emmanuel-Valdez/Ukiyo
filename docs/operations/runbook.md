@@ -94,7 +94,7 @@ Copy VaultShop dumps to the local PC from PowerShell:
 
 ```powershell
 mkdir ~/Backups/VaultShop/Postgres
-scp ubuntu@<vps-tailscale-ip>:/home/ubuntu/vaultshop-backups/postgres/*.dump ~/Backups/VaultShop/Postgres/
+scp ubuntu@<vps-tailscale-ip>:/home/ubuntu/vaultshop-backups/postgres/*.dump $HOME\Backups\VaultShop\Postgres\
 dir ~/Backups/VaultShop/Postgres
 ```
 
@@ -102,7 +102,7 @@ Copy UkiyoStudio dumps the same way, own dir and own files:
 
 ```powershell
 mkdir ~/Backups/UkiyoStudio/Postgres
-scp ubuntu@<vps-tailscale-ip>:/home/ubuntu/ukiyostudio-backups/postgres/*.dump ~/Backups/UkiyoStudio/Postgres/
+scp ubuntu@<vps-tailscale-ip>:/home/ubuntu/ukiyostudio-backups/postgres/*.dump $HOME\Backups\UkiyoStudio\Postgres\
 dir ~/Backups/UkiyoStudio/Postgres
 ```
 
@@ -129,8 +129,8 @@ docker run --name ukiyostudio-restore-postgres -e POSTGRES_USER=ukiyostudio_rest
 Copy each dump into its own container:
 
 ```powershell
-docker cp ~/Backups/VaultShop/Postgres/vaultshop_YYYY-MM-DD_HHMM.dump vaultshop-restore-postgres:/backup.dump
-docker cp ~/Backups/UkiyoStudio/Postgres/ukiyostudio_YYYY-MM-DD_HHMM.dump ukiyostudio-restore-postgres:/backup.dump
+docker cp $HOME\Backups\VaultShop\Postgres\vaultshop_YYYY-MM-DD_HHMM.dump vaultshop-restore-postgres:/backup.dump
+docker cp $HOME\Backups\UkiyoStudio\Postgres\ukiyostudio_YYYY-MM-DD_HHMM.dump ukiyostudio-restore-postgres:/backup.dump
 ```
 
 Restore:
@@ -182,9 +182,9 @@ Copy each store's archives to the local PC from PowerShell:
 
 ```powershell
 mkdir ~/Backups/VaultShop/MinIO
-scp ubuntu@<vps-tailscale-ip>:/home/ubuntu/vaultshop-backups/minio/*.tar.gz ~/Backups/VaultShop/MinIO/
+scp ubuntu@<vps-tailscale-ip>:/home/ubuntu/vaultshop-backups/minio/*.tar.gz $HOME\Backups\VaultShop\MinIO\
 mkdir ~/Backups/UkiyoStudio/MinIO
-scp ubuntu@<vps-tailscale-ip>:/home/ubuntu/ukiyostudio-backups/minio/*.tar.gz ~/Backups/UkiyoStudio/MinIO/
+scp ubuntu@<vps-tailscale-ip>:/home/ubuntu/ukiyostudio-backups/minio/*.tar.gz $HOME\Backups\UkiyoStudio\MinIO\
 dir ~/Backups/VaultShop/MinIO; dir ~/Backups/UkiyoStudio/MinIO
 ```
 
@@ -202,10 +202,10 @@ Create clean local Docker volumes per store, then extract:
 
 ```powershell
 docker volume create vaultshop-restore-minio-data
-docker run --rm -v vaultshop-restore-minio-data:/data -v ~/Backups/VaultShop/MinIO:/backup alpine sh -c "tar xzf /backup/product-images_YYYY-MM-DD_HHMM.tar.gz -C /data"
+docker run --rm -v vaultshop-restore-minio-data:/data -v $HOME\Backups\VaultShop\MinIO:/backup alpine sh -c "tar xzf /backup/product-images_YYYY-MM-DD_HHMM.tar.gz -C /data"
 
 docker volume create ukiyostudio-restore-minio-data
-docker run --rm -v ukiyostudio-restore-minio-data:/data -v ~/Backups/UkiyoStudio/MinIO:/backup alpine sh -c "tar xzf /backup/ukiyostudio-images_YYYY-MM-DD_HHMM.tar.gz -C /data"
+docker run --rm -v ukiyostudio-restore-minio-data:/data -v $HOME\Backups\UkiyoStudio\MinIO:/backup alpine sh -c "tar xzf /backup/ukiyostudio-images_YYYY-MM-DD_HHMM.tar.gz -C /data"
 ```
 
 Start a temporary local MinIO instance per store:
