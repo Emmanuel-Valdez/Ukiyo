@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 STORE="${1:?Usage: do-backup.sh <vaultshop|ukiyostudio>}"
@@ -70,7 +70,8 @@ docker run --rm --network host \
     -e MINIO_USER="$MINIO_USER" \
     -e MINIO_PASSWORD="$MINIO_PASSWORD" \
     -e BUCKET_NAME="$BUCKET_NAME" \
-    minio/mc:latest sh -ec '
+    --entrypoint sh \
+    minio/mc:latest -ec '
         mc alias set local http://127.0.0.1:9000 "$MINIO_USER" "$MINIO_PASSWORD" >/dev/null
         mc mirror --overwrite "local/$BUCKET_NAME" "/backup/$BUCKET_NAME"
     '

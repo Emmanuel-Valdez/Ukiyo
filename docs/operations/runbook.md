@@ -162,7 +162,8 @@ Manual, from the VPS (the backup dir is mounted read-write so `mc` can write the
 mkdir -p ~/vaultshop-backups/minio ~/ukiyostudio-backups/minio
 docker run --rm --network host -v ~/<store>-backups/minio:/backup \
   -e MINIO_USER="<store minio user>" -e MINIO_PASSWORD="<store minio password>" \
-  -e BUCKET_NAME="<store bucket>" minio/mc:latest sh -ec '
+  --entrypoint sh \
+  -e BUCKET_NAME="<store bucket>" minio/mc:latest -ec '
     mc alias set local http://127.0.0.1:9000 "$MINIO_USER" "$MINIO_PASSWORD" >/dev/null
     mc mirror --overwrite "local/$BUCKET_NAME" "/backup/$BUCKET_NAME"
   '

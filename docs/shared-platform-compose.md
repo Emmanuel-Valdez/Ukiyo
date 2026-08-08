@@ -51,11 +51,11 @@ docker compose --env-file /opt/vaultshop/.platform.env -f docker-compose.platfor
 # MinIO: each store's user should be denied against the other store's bucket.
 # MinIO has no published host port in this layout, so run mc from a throwaway
 # container on the shared network instead of from the host.
-docker run --rm --network vaultshop-net minio/mc:latest sh -c '
+docker run --rm --network vaultshop-net --entrypoint sh minio/mc:latest -c '
   mc alias set vaultshop-check http://minio:9000 vaultshop_app "<VAULTSHOP_MINIO_PASSWORD>"
   mc ls vaultshop-check/ukiyostudio-images
 '   # expect AccessDenied
-docker run --rm --network vaultshop-net minio/mc:latest sh -c '
+docker run --rm --network vaultshop-net --entrypoint sh minio/mc:latest -c '
   mc alias set ukiyo-check http://minio:9000 ukiyostudio_app "<UKIYO_MINIO_PASSWORD>"
   mc ls ukiyo-check/product-images
 '   # expect AccessDenied
