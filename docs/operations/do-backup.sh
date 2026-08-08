@@ -69,8 +69,10 @@ docker run --rm --network host \
     -v "$BACKUP_DIR/minio":/backup \
     -e MINIO_USER="$MINIO_USER" \
     -e MINIO_PASSWORD="$MINIO_PASSWORD" \
-    -e BUCKET_NAME="$BUCKET_NAME" \
+    --user "$(id -u):$(id -g)" \
     --entrypoint sh \
+    -e BUCKET_NAME="$BUCKET_NAME" \
+    -e MC_CONFIG_DIR=/tmp/mc \
     minio/mc:latest -ec '
         mc alias set local http://127.0.0.1:9000 "$MINIO_USER" "$MINIO_PASSWORD" >/dev/null
         mc mirror --overwrite "local/$BUCKET_NAME" "/backup/$BUCKET_NAME"
