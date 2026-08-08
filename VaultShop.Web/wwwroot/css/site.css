@@ -159,6 +159,18 @@ html {
     color: var(--theme-accent) !important;
 }
 
+.footer-logo--dark {
+    display: none;
+}
+
+[data-bs-theme=dark] .footer-logo--light {
+    display: none;
+}
+
+[data-bs-theme=dark] .footer-logo--dark {
+    display: inline;
+}
+
 .footer-signature {
     display: inline-flex;
     align-items: center;

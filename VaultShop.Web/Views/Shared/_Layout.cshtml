@@ -305,7 +305,8 @@
 		<footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top  bg-gradient rounded">
 			<div class="col-md-4 d-flex align-items-center">
 				<a class="navbar-brand px-4 " asp-area="" asp-controller="Home" asp-action="Index">
-					<img src="@branding.LogoPath" alt="@branding.PublicName" style="width:170px; max-width:52vw;" />
+					<img class="footer-logo footer-logo--light" src="@branding.LogoPath" alt="@branding.PublicName" style="width:170px; max-width:52vw;" />
+					<img class="footer-logo footer-logo--dark" src="@branding.LogoDarkPath" alt="@branding.PublicName" style="width:170px; max-width:52vw;" />
 				</a>
 
 				@if (hasDevLink)
