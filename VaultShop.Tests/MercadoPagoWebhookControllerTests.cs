@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
@@ -80,6 +81,21 @@ namespace VaultShop.Web.Tests
 			var externalReference = mismatch == "order" ? "99" : "42";
 			var amount = mismatch == "amount" ? 99m : 100m;
 			using var test = CreateController(order, new("", "PAYMENT123", "paid", externalReference, amount));
+			SignRequest(test.Controller, "PAYMENT123");
+
+			var result = await test.Controller.Post();
+
+			Assert.IsType<OkResult>(result);
+			test.PaymentStatus.Verify(service => service.MarkCheckoutSessionPaid(It.IsAny<PaymentSessionStatusUpdate>()), Times.Never);
+			test.Email.Verify(service => service.TrySendPaymentReceiptAsync(It.IsAny<int>()), Times.Never);
+		}
+
+		[Fact]
+		public async Task Post_UnknownPayment_ReturnsOkWithoutStateChange()
+		{
+			using var test = CreateController(MercadoPagoOrder(), new("", "PAYMENT123", "paid", "42", 100m));
+			test.PaymentSession.Setup(service => service.GetCheckoutSessionStatus(string.Empty, "PAYMENT123"))
+				.Throws(new HttpRequestException("Payment not found", null, HttpStatusCode.NotFound));
 			SignRequest(test.Controller, "PAYMENT123");
 
 			var result = await test.Controller.Post();

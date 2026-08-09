@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
@@ -66,6 +67,11 @@ namespace VaultShop.Web.Controllers
 			{
 				var paymentService = _paymentSessionServiceProvider.GetRequiredKeyedService<IPaymentSessionService>(SD.PaymentMethodMercadoPago);
 				payment = paymentService.GetCheckoutSessionStatus(string.Empty, paymentId);
+			}
+			catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+			{
+				_logger.LogWarning("Ignored Mercado Pago webhook for unknown payment {PaymentId}.", paymentId);
+				return Ok();
 			}
 			catch (Exception ex)
 			{
