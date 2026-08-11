@@ -6,7 +6,7 @@
 ![Status](https://img.shields.io/badge/status-in%20progress-yellow)
 ![License](https://img.shields.io/badge/license-source--available-blue)
 
-VaultShop is a portfolio e-commerce project for custom anime-inspired backpacks and accessories. It started as a traditional ASP.NET Core MVC store and is now a production-style case study with PostgreSQL, Docker Compose, MinIO/S3-compatible image storage, Stripe payments, automated tests, backup/restore validation, lightweight monitoring, and deployment-oriented hardening.
+VaultShop is a portfolio e-commerce project for custom anime-inspired backpacks and accessories. It started as a traditional ASP.NET Core MVC store and is now a production-style case study with PostgreSQL, Docker Compose, MinIO/S3-compatible image storage, Stripe and Mercado Pago payments, automated tests, backup/restore validation, lightweight monitoring, and deployment-oriented hardening.
 
 The application is live and functional. Current work focuses on keeping the portfolio demo explainable, recoverable, and honest about its remaining production gaps.
 
@@ -33,7 +33,7 @@ Selected current flows for backend/portfolio review.
 - Admin pricing calculator for fabrics, garment hardware, packaging, fixed costs, separate retail/wholesale percentage costs, profit margins, and final prices.
 - Final price dashboard that compares current storefront prices with calculated cost-based suggestions.
 - ASP.NET Core Identity with roles for Customer, Company, Employee, and Admin users.
-- Stripe Checkout integration with webhook-based payment status updates.
+- Stripe Checkout and Mercado Pago Checkout Pro integrations with webhook-based payment status updates and refunds on order cancellation.
 - Product image upload validation, resizing, metadata persistence, and storage abstraction.
 - Localization for Spanish and English.
 
@@ -56,10 +56,11 @@ Selected current flows for backend/portfolio review.
 - Product image persistence is behind `IImageStorageService`; the app supports local filesystem storage and MinIO.
 - `ProductImage.ObjectKey` is the storage identity for uploaded images. `ImageUrl` is used only as the browser display URL.
 - Checkout order creation is handled by `CheckoutService` and wrapped in a transaction to avoid partial orders.
-- Stripe Checkout confirmation is hardened: signed webhooks and server-side Checkout Session reads are the trusted payment sources; browser redirects only trigger verification, `session_id` must match the stored order session, stale/terminal sessions are ignored, and unpaid orders cannot be shipped.
+- Stripe Checkout confirmation is hardened: signed webhooks and server-side Checkout Session reads are the trusted payment sources; browser redirects only trigger verification, `session_id` must match the stored order session, stale/terminal sessions are ignored, and unpaid orders cannot be shipped. Mercado Pago follows the same model: signed webhook validation, provider-side preference/payment verification, and refunds on order cancellation (refund failures fail open and log for manual review).
 - Customer orders remain `Pending / Pending` until Stripe reports `paid`; Company delayed-payment orders can be prepared before payment, but shipping remains blocked until `PaymentStatus == Approved`.
 - Production-like environments can disable startup migrations with `Database__RunMigrationsOnStartup=false`.
 - The public deployment runs behind Nginx HTTPS reverse proxy on a Linux VPS, with PostgreSQL and MinIO kept off the public internet.
+- Shared platform deployments (VaultShop + UkiyoStudio) isolate each store in its own PostgreSQL database and MinIO bucket with scoped credentials, so one store cannot read another store's data; backup scripts and MinIO API users are per-store.
 - Public branding values, including `/site.webmanifest` icon paths, are configurable through `Branding__...` so preview/demo and future private deployments can use different names/assets without branching the codebase.
 - Public theme colors are configurable through validated hex `Theme__...` values emitted as CSS custom properties.
 
@@ -92,6 +93,9 @@ Database__RunMigrationsOnStartup
 Stripe__SecretKey
 Stripe__PublishableKey
 Stripe__WebhookSecret
+Payments__MercadoPagoEnabled
+Payments__MercadoPagoAccessToken
+Payments__MercadoPagoWebhookSecret
 Facebook__AppId
 Facebook__AppSecret
 Email__Provider
@@ -123,6 +127,8 @@ ImageStorage__Minio__PublicBaseUrl
 ```
 
 For local/demo email behavior, use `Email__Provider=Fake`. For real transactional email, use `Email__Provider=Resend` with a private `Resend__ApiKey` and verified sender.
+
+Mercado Pago is opt-in via `Payments__MercadoPagoEnabled`; it requires a private `Payments__MercadoPagoAccessToken` and `Payments__MercadoPagoWebhookSecret` and is disabled by default.
 
 Development-only manual payment approval exists for local testing only: it requires `ASPNETCORE_ENVIRONMENT=Development` and `Payments__AllowDevelopmentManualApproval=true`. Keep it disabled in preview and production.
 
@@ -225,7 +231,7 @@ Run the automated tests:
 dotnet test VaultShop.sln
 ```
 
-Current tests focus on high-value service behavior: upload validation, checkout rules, transactional order creation, Stripe session creation, payment status updates, and pricing calculator formulas/publish behavior.
+Current tests focus on high-value service behavior: upload validation, checkout rules, transactional order creation, payment provider routing and session creation (Stripe and Mercado Pago), webhook verification, refunds, and pricing calculator formulas/publish behavior.
 
 ## Deployment Direction
 
@@ -241,7 +247,7 @@ Current deployment shape:
 
 Remaining deployment hardening:
 
-- Automate PostgreSQL and MinIO backups after the manual restore-tested process.
+- PostgreSQL and MinIO backups are automated via store-parametric scripts (weekly for the demo, daily for UkiyoStudio) with freshness and disk checks; restore drills remain manual.
 - Expand monitoring beyond uptime/TLS if the project starts handling real usage.
 - Verify payment webhooks and key user flows after every deployment change.
 
@@ -249,7 +255,7 @@ Operations runbook: [`docs/operations/runbook.md`](docs/operations/runbook.md).
 
 ## Current Limitations / Next Work
 
-- Backups and restore have been tested manually; backup automation and freshness checks are planned later.
+- Backups are automated with cron and freshness/disk checks; restore has been tested manually and restore drills are repeated occasionally.
 - Manual browser checks should still be repeated after deployment changes for Stripe paid/unpaid flows, branding/theme overrides, and fulfillment guards.
 - The storefront frontend is functional, but backend/deployment evidence remains the main portfolio value.
 
