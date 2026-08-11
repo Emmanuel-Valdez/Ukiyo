@@ -335,7 +335,7 @@ namespace VaultShop.Web.Tests
 		}
 
 		[Fact]
-		public void CancelOrder_ApprovedBankTransfer_CancelsWithoutStripeRefund()
+		public async Task CancelOrder_ApprovedBankTransfer_CancelsWithoutStripeRefund()
 		{
 			var order = new OrderHeader
 			{
@@ -347,18 +347,18 @@ namespace VaultShop.Web.Tests
 			};
 			var test = CreateController(Environments.Development, allowManualApproval: false, orderHeader: order, user: CreateUser("admin-user", SD.Role_Admin));
 
-			var result = test.Controller.CancelOrder();
+			var result = await test.Controller.CancelOrder();
 
 			var redirect = Assert.IsType<RedirectToActionResult>(result);
 			Assert.Equal("Details", redirect.ActionName);
 			Assert.Equal(42, redirect.RouteValues?["orderId"]);
-			test.PaymentRefundMock.Verify(x => x.RefundPaymentIntent(It.IsAny<string>()), Times.Never);
+			test.PaymentRefundMock.Verify(x => x.RefundPaymentIntentAsync(It.IsAny<string>()), Times.Never);
 			test.OrderHeaderMock.Verify(x => x.UpdateStatus(42, SD.StatusCancelled, null), Times.Once);
 			test.UnitOfWorkMock.Verify(x => x.Save(), Times.Once);
 		}
 
 		[Fact]
-		public void CancelOrder_ApprovedStripeOrder_RefundsPaymentIntent()
+		public async Task CancelOrder_ApprovedStripeOrder_RefundsPaymentIntent()
 		{
 			var order = new OrderHeader
 			{
@@ -369,37 +369,20 @@ namespace VaultShop.Web.Tests
 				OrderStatus = SD.StatusApproved
 			};
 			var test = CreateController(Environments.Development, allowManualApproval: false, orderHeader: order, user: CreateUser("admin-user", SD.Role_Admin));
+			test.PaymentRefundMock
+				.Setup(x => x.RefundPaymentIntentAsync("pi_stripe"))
+				.Returns(Task.CompletedTask);
 
-			var result = test.Controller.CancelOrder();
+			var result = await test.Controller.CancelOrder();
 
 			Assert.IsType<RedirectToActionResult>(result);
-			test.PaymentRefundMock.Verify(x => x.RefundPaymentIntent("pi_stripe"), Times.Once);
+			test.PaymentRefundMock.Verify(x => x.RefundPaymentIntentAsync("pi_stripe"), Times.Once);
 			test.OrderHeaderMock.Verify(x => x.UpdateStatus(42, SD.StatusCancelled, SD.StatusRefunded), Times.Once);
 			test.UnitOfWorkMock.Verify(x => x.Save(), Times.Once);
 		}
 
 		[Fact]
-		public void CancelOrder_ApprovedMercadoPagoOrder_RefundsPayment()
-		{
-			var order = new OrderHeader
-			{
-				Id = 42,
-				PaymentMethod = SD.PaymentMethodMercadoPago,
-				PaymentIntentId = "payment_mp",
-				PaymentStatus = SD.PaymentStatusApproved,
-				OrderStatus = SD.StatusApproved
-			};
-			var test = CreateController(Environments.Development, allowManualApproval: false, orderHeader: order, user: CreateUser("admin-user", SD.Role_Admin));
-
-			var result = test.Controller.CancelOrder();
-
-			Assert.IsType<RedirectToActionResult>(result);
-			test.MercadoPagoPaymentRefundMock.Verify(x => x.RefundPaymentIntent("payment_mp"), Times.Once);
-			test.OrderHeaderMock.Verify(x => x.UpdateStatus(42, SD.StatusCancelled, SD.StatusRefunded), Times.Once);
-			test.UnitOfWorkMock.Verify(x => x.Save(), Times.Once);
-		}
-		[Fact]
-		public void CancelOrder_MercadoPagoRefundFailure_StillCancelsOrder()
+		public async Task CancelOrder_ApprovedMercadoPagoOrder_RefundsPayment()
 		{
 			var order = new OrderHeader
 			{
@@ -411,12 +394,57 @@ namespace VaultShop.Web.Tests
 			};
 			var test = CreateController(Environments.Development, allowManualApproval: false, orderHeader: order, user: CreateUser("admin-user", SD.Role_Admin));
 			test.MercadoPagoPaymentRefundMock
-				.Setup(x => x.RefundPaymentIntent("payment_mp"))
-				.Throws(new HttpRequestException("refund failed"));
+				.Setup(x => x.RefundPaymentIntentAsync("payment_mp"))
+				.Returns(Task.CompletedTask);
 
-			var result = test.Controller.CancelOrder();
+			var result = await test.Controller.CancelOrder();
 
 			Assert.IsType<RedirectToActionResult>(result);
+			test.MercadoPagoPaymentRefundMock.Verify(x => x.RefundPaymentIntentAsync("payment_mp"), Times.Once);
+			test.OrderHeaderMock.Verify(x => x.UpdateStatus(42, SD.StatusCancelled, SD.StatusRefunded), Times.Once);
+			test.UnitOfWorkMock.Verify(x => x.Save(), Times.Once);
+		}
+		[Fact]
+		public async Task CancelOrder_MercadoPagoRefundFailure_StillCancelsOrder()
+		{
+			var order = new OrderHeader
+			{
+				Id = 42,
+				PaymentMethod = SD.PaymentMethodMercadoPago,
+				PaymentIntentId = "payment_mp",
+				PaymentStatus = SD.PaymentStatusApproved,
+				OrderStatus = SD.StatusApproved
+			};
+			var test = CreateController(Environments.Development, allowManualApproval: false, orderHeader: order, user: CreateUser("admin-user", SD.Role_Admin));
+			test.MercadoPagoPaymentRefundMock
+				.Setup(x => x.RefundPaymentIntentAsync("payment_mp"))
+				.Throws(new HttpRequestException("refund failed"));
+
+			var result = await test.Controller.CancelOrder();
+
+			Assert.IsType<RedirectToActionResult>(result);
+			test.OrderHeaderMock.Verify(x => x.UpdateStatus(42, SD.StatusCancelled, null), Times.Once);
+			test.OrderHeaderMock.Verify(x => x.UpdateStatus(42, SD.StatusCancelled, SD.StatusRefunded), Times.Never);
+			test.UnitOfWorkMock.Verify(x => x.Save(), Times.Once);
+		}
+
+		[Fact]
+		public async Task CancelOrder_ApprovedMercadoPagoOrderWithoutPaymentIntent_DoesNotCallRefund()
+		{
+			var order = new OrderHeader
+			{
+				Id = 42,
+				PaymentMethod = SD.PaymentMethodMercadoPago,
+				PaymentIntentId = null,
+				PaymentStatus = SD.PaymentStatusApproved,
+				OrderStatus = SD.StatusApproved
+			};
+			var test = CreateController(Environments.Development, allowManualApproval: false, orderHeader: order, user: CreateUser("admin-user", SD.Role_Admin));
+
+			var result = await test.Controller.CancelOrder();
+
+			Assert.IsType<RedirectToActionResult>(result);
+			test.MercadoPagoPaymentRefundMock.Verify(x => x.RefundPaymentIntentAsync(It.IsAny<string>()), Times.Never);
 			test.OrderHeaderMock.Verify(x => x.UpdateStatus(42, SD.StatusCancelled, null), Times.Once);
 			test.OrderHeaderMock.Verify(x => x.UpdateStatus(42, SD.StatusCancelled, SD.StatusRefunded), Times.Never);
 			test.UnitOfWorkMock.Verify(x => x.Save(), Times.Once);

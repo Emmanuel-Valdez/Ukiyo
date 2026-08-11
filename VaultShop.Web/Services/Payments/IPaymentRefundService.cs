@@ -5,16 +5,16 @@ namespace VaultShop.Web.Services.Payments
 {
 	public interface IPaymentRefundService
 	{
-		void RefundPaymentIntent(string paymentIntentId);
+		Task RefundPaymentIntentAsync(string paymentIntentId);
 	}
 
 	public sealed class StripePaymentRefundService : IPaymentRefundService
 	{
 		private readonly RefundService _refundService = new();
 
-		public void RefundPaymentIntent(string paymentIntentId)
+		public async Task RefundPaymentIntentAsync(string paymentIntentId)
 		{
-			_refundService.Create(new RefundCreateOptions
+			await _refundService.CreateAsync(new RefundCreateOptions
 			{
 				Reason = RefundReasons.RequestedByCustomer,
 				PaymentIntent = paymentIntentId
@@ -22,32 +22,26 @@ namespace VaultShop.Web.Services.Payments
 		}
 	}
 
-	public sealed class MercadoPagoRefundService : IPaymentRefundService
+	public sealed class MercadoPagoPaymentRefundService : IPaymentRefundService
 	{
 		private readonly IHttpClientFactory _httpClientFactory;
-		private readonly ILogger<MercadoPagoRefundService> _logger;
 
-		public MercadoPagoRefundService(IHttpClientFactory httpClientFactory, ILogger<MercadoPagoRefundService> logger)
+		public MercadoPagoPaymentRefundService(IHttpClientFactory httpClientFactory)
 		{
 			_httpClientFactory = httpClientFactory;
-			_logger = logger;
 		}
 
-		public void RefundPaymentIntent(string paymentIntentId)
+		public async Task RefundPaymentIntentAsync(string paymentIntentId)
 		{
-			var client = _httpClientFactory.CreateClient(MercadoPagoPaymentSessionService.HttpClientName);
+			var client = MercadoPagoHttp.CreateConfiguredClient(_httpClientFactory);
 			// ponytail: 30s cap, no retry - Mercado Pago has no idempotency key, retrying a refund POST risks double-refund.
 			client.Timeout = TimeSpan.FromSeconds(30);
-			using var response = client.SendAsync(new HttpRequestMessage(HttpMethod.Post, $"/v1/payments/{Uri.EscapeDataString(paymentIntentId)}/refunds")
+			using var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Post, $"/v1/payments/{Uri.EscapeDataString(paymentIntentId)}/refunds")
 			{
 				Content = new StringContent("{}", Encoding.UTF8, "application/json")
-			}).GetAwaiter().GetResult();
-			var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-			if (!response.IsSuccessStatusCode)
-			{
-				_logger.LogError("Mercado Pago refund failed with status {StatusCode}: {Body}", (int)response.StatusCode, body);
-			}
-			response.EnsureSuccessStatusCode();
+			});
+			var body = await response.Content.ReadAsStringAsync();
+			MercadoPagoHttp.EnsureSuccess(response, body, "refund payment");
 		}
 	}
 }

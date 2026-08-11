@@ -180,7 +180,7 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 
 		[Authorize(Roles = SD.Role_Admin)]
 		[HttpPost]
-		public IActionResult CancelOrder()
+		public async Task<IActionResult> CancelOrder()
 		{
 			var orderHeader = _unitOfWork.OrderHeader.Get(u => u.Id == OrderVM.OrderHeader.Id);
 			if (orderHeader == null)
@@ -190,30 +190,17 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 
 			if (orderHeader.PaymentStatus == SD.PaymentStatusApproved)
 			{
-				if (orderHeader.PaymentMethod == SD.PaymentMethodStripe && !string.IsNullOrWhiteSpace(orderHeader.PaymentIntentId))
+				if (orderHeader.PaymentMethod is SD.PaymentMethodStripe or SD.PaymentMethodMercadoPago
+					&& !string.IsNullOrWhiteSpace(orderHeader.PaymentIntentId))
 				{
 					try
 					{
-						_paymentRefundService.RefundPaymentIntent(orderHeader.PaymentIntentId);
+						await GetPaymentRefundService(orderHeader).RefundPaymentIntentAsync(orderHeader.PaymentIntentId);
 						_unitOfWork.OrderHeader.UpdateStatus(orderHeader.Id, SD.StatusCancelled, SD.StatusRefunded);
 					}
 					catch (Exception ex)
 					{
-						_logger.LogError(ex, "Failed to create Stripe refund while cancelling order {OrderId}. Order downgraded to Cancelled, manual refund review required.", orderHeader.Id);
-						_unitOfWork.OrderHeader.UpdateStatus(orderHeader.Id, SD.StatusCancelled);
-					}
-				}
-				else if (orderHeader.PaymentMethod == SD.PaymentMethodMercadoPago && !string.IsNullOrWhiteSpace(orderHeader.PaymentIntentId))
-				{
-					try
-					{
-						_paymentSessionServiceProvider.GetRequiredKeyedService<IPaymentRefundService>(SD.PaymentMethodMercadoPago)
-							.RefundPaymentIntent(orderHeader.PaymentIntentId);
-						_unitOfWork.OrderHeader.UpdateStatus(orderHeader.Id, SD.StatusCancelled, SD.StatusRefunded);
-					}
-					catch (Exception ex)
-					{
-						_logger.LogError(ex, "Failed to create Mercado Pago refund while cancelling order {OrderId}. Order downgraded to Cancelled, manual refund review required.", orderHeader.Id);
+						_logger.LogError(ex, "Failed to create {PaymentMethod} refund while cancelling order {OrderId}. Order downgraded to Cancelled, manual refund review required.", orderHeader.PaymentMethod, orderHeader.Id);
 						_unitOfWork.OrderHeader.UpdateStatus(orderHeader.Id, SD.StatusCancelled);
 					}
 				}
@@ -470,6 +457,19 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 				SD.PaymentMethodMercadoPago => _configuration.GetValue("Payments:MercadoPagoEnabled", false),
 				_ => false
 			};
+		}
+
+		private IPaymentRefundService GetPaymentRefundService(OrderHeader orderHeader)
+		{
+			var paymentMethod = orderHeader.PaymentMethod ?? SD.PaymentMethodStripe;
+			if (paymentMethod is not (SD.PaymentMethodStripe or SD.PaymentMethodMercadoPago))
+			{
+				throw new InvalidOperationException($"Order {orderHeader.Id} does not use an online payment provider.");
+			}
+
+			return paymentMethod == SD.PaymentMethodMercadoPago
+				? _paymentSessionServiceProvider.GetRequiredKeyedService<IPaymentRefundService>(SD.PaymentMethodMercadoPago)
+				: _paymentRefundService;
 		}
 
 		private IPaymentSessionService GetPaymentSessionService(OrderHeader orderHeader)

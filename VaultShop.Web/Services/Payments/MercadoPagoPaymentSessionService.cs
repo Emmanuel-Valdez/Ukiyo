@@ -7,8 +7,6 @@ namespace VaultShop.Web.Services.Payments
 {
 	public sealed class MercadoPagoPaymentSessionService : IPaymentSessionService
 	{
-		internal const string HttpClientName = "MercadoPago";
-
 		private readonly IHttpClientFactory _httpClientFactory;
 		private readonly ILogger<MercadoPagoPaymentSessionService> _logger;
 
@@ -22,7 +20,7 @@ namespace VaultShop.Web.Services.Payments
 
 		public PaymentSessionResult CreateCheckoutSession(PaymentSessionRequest request)
 		{
-			using var client = CreateConfiguredClient();
+			using var client = MercadoPagoHttp.CreateConfiguredClient(_httpClientFactory);
 			// ponytail: raw HttpClient is enough here because Mercado Pago v1 only needs create-preference and payment-search; add a dedicated abstraction only if retries/auth rules or more endpoints appear.
 			var payload = new
 			{
@@ -52,7 +50,7 @@ namespace VaultShop.Web.Services.Payments
 			}).GetAwaiter().GetResult();
 
 			var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-			EnsureSuccess(response, body, "create checkout preference");
+			MercadoPagoHttp.EnsureSuccess(response, body, "create checkout preference");
 
 			using var json = JsonDocument.Parse(body);
 			var root = json.RootElement;
@@ -64,14 +62,14 @@ namespace VaultShop.Web.Services.Payments
 
 		public PaymentSessionStatusResult GetCheckoutSessionStatus(string sessionId, string? providerPaymentId = null)
 		{
-			using var client = CreateConfiguredClient();
+			using var client = MercadoPagoHttp.CreateConfiguredClient(_httpClientFactory);
 			var requestUrl = string.IsNullOrWhiteSpace(providerPaymentId)
 				? $"/v1/payments/search?sort=date_created&criteria=desc&limit=1&preference_id={Uri.EscapeDataString(sessionId)}"
 				: $"/v1/payments/{Uri.EscapeDataString(providerPaymentId)}";
 			using var response = client.SendAsync(new HttpRequestMessage(HttpMethod.Get, requestUrl)).GetAwaiter().GetResult();
 
 			var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-			EnsureSuccess(response, body, string.IsNullOrWhiteSpace(providerPaymentId) ? "search payments" : "get payment");
+			MercadoPagoHttp.EnsureSuccess(response, body, string.IsNullOrWhiteSpace(providerPaymentId) ? "search payments" : "get payment");
 
 			using var json = JsonDocument.Parse(body);
 			if (!string.IsNullOrWhiteSpace(providerPaymentId))
@@ -105,27 +103,6 @@ namespace VaultShop.Web.Services.Payments
 		public void ExpireCheckoutSession(string sessionId)
 		{
 			_logger.LogInformation("Mercado Pago checkout preference {SessionId} is not explicitly expired because this integration currently relies on provider-side lifecycle only.", sessionId);
-		}
-
-		private HttpClient CreateConfiguredClient()
-		{
-			var client = _httpClientFactory.CreateClient(HttpClientName);
-			if (client.DefaultRequestHeaders.Authorization is null || string.IsNullOrWhiteSpace(client.DefaultRequestHeaders.Authorization.Parameter))
-			{
-				throw new InvalidOperationException("Missing required Payments:MercadoPagoAccessToken configuration.");
-			}
-
-			return client;
-		}
-
-		private static void EnsureSuccess(HttpResponseMessage response, string body, string operation)
-		{
-			if (response.IsSuccessStatusCode)
-			{
-				return;
-			}
-
-			throw new HttpRequestException($"Mercado Pago {operation} failed with status code {(int)response.StatusCode}: {body}", null, response.StatusCode);
 		}
 
 		private static string GetRequiredString(JsonElement element, string propertyName)
