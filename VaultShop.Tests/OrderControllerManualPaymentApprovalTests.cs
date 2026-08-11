@@ -1,4 +1,5 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
+using System.Net.Http;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -374,6 +375,50 @@ namespace VaultShop.Web.Tests
 			Assert.IsType<RedirectToActionResult>(result);
 			test.PaymentRefundMock.Verify(x => x.RefundPaymentIntent("pi_stripe"), Times.Once);
 			test.OrderHeaderMock.Verify(x => x.UpdateStatus(42, SD.StatusCancelled, SD.StatusRefunded), Times.Once);
+			test.UnitOfWorkMock.Verify(x => x.Save(), Times.Once);
+		}
+
+		[Fact]
+		public void CancelOrder_ApprovedMercadoPagoOrder_RefundsPayment()
+		{
+			var order = new OrderHeader
+			{
+				Id = 42,
+				PaymentMethod = SD.PaymentMethodMercadoPago,
+				PaymentIntentId = "payment_mp",
+				PaymentStatus = SD.PaymentStatusApproved,
+				OrderStatus = SD.StatusApproved
+			};
+			var test = CreateController(Environments.Development, allowManualApproval: false, orderHeader: order, user: CreateUser("admin-user", SD.Role_Admin));
+
+			var result = test.Controller.CancelOrder();
+
+			Assert.IsType<RedirectToActionResult>(result);
+			test.MercadoPagoPaymentRefundMock.Verify(x => x.RefundPaymentIntent("payment_mp"), Times.Once);
+			test.OrderHeaderMock.Verify(x => x.UpdateStatus(42, SD.StatusCancelled, SD.StatusRefunded), Times.Once);
+			test.UnitOfWorkMock.Verify(x => x.Save(), Times.Once);
+		}
+		[Fact]
+		public void CancelOrder_MercadoPagoRefundFailure_StillCancelsOrder()
+		{
+			var order = new OrderHeader
+			{
+				Id = 42,
+				PaymentMethod = SD.PaymentMethodMercadoPago,
+				PaymentIntentId = "payment_mp",
+				PaymentStatus = SD.PaymentStatusApproved,
+				OrderStatus = SD.StatusApproved
+			};
+			var test = CreateController(Environments.Development, allowManualApproval: false, orderHeader: order, user: CreateUser("admin-user", SD.Role_Admin));
+			test.MercadoPagoPaymentRefundMock
+				.Setup(x => x.RefundPaymentIntent("payment_mp"))
+				.Throws(new HttpRequestException("refund failed"));
+
+			var result = test.Controller.CancelOrder();
+
+			Assert.IsType<RedirectToActionResult>(result);
+			test.OrderHeaderMock.Verify(x => x.UpdateStatus(42, SD.StatusCancelled, null), Times.Once);
+			test.OrderHeaderMock.Verify(x => x.UpdateStatus(42, SD.StatusCancelled, SD.StatusRefunded), Times.Never);
 			test.UnitOfWorkMock.Verify(x => x.Save(), Times.Once);
 		}
 
@@ -920,6 +965,7 @@ namespace VaultShop.Web.Tests
 			var paymentSessionMock = new Mock<IPaymentSessionService>();
 			var mercadoPagoPaymentSessionMock = new Mock<IPaymentSessionService>();
 			var paymentRefundMock = new Mock<IPaymentRefundService>();
+			var mercadoPagoPaymentRefundMock = new Mock<IPaymentRefundService>();
 			var emailServiceMock = new Mock<ITransactionalEmailService>();
 			var localizerMock = new Mock<IStringLocalizer<OrderController>>();
 			localizerMock
@@ -938,6 +984,7 @@ namespace VaultShop.Web.Tests
 			var requestServices = new ServiceCollection();
 			requestServices.AddKeyedScoped<IPaymentSessionService>(SD.PaymentMethodStripe, (_, _) => paymentSessionMock.Object);
 			requestServices.AddKeyedScoped<IPaymentSessionService>(SD.PaymentMethodMercadoPago, (_, _) => mercadoPagoPaymentSessionMock.Object);
+			requestServices.AddKeyedScoped<IPaymentRefundService>(SD.PaymentMethodMercadoPago, (_, _) => mercadoPagoPaymentRefundMock.Object);
 			var paymentSessionServiceProvider = requestServices.BuildServiceProvider();
 			var httpContext = new DefaultHttpContext
 			{
@@ -962,7 +1009,7 @@ namespace VaultShop.Web.Tests
 				TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>())
 			};
 
-			return new TestController(controller, paymentStatusMock, paymentSessionMock, mercadoPagoPaymentSessionMock, paymentRefundMock, unitOfWorkMock, orderHeaderMock, emailServiceMock);
+			return new TestController(controller, paymentStatusMock, paymentSessionMock, mercadoPagoPaymentSessionMock, paymentRefundMock, mercadoPagoPaymentRefundMock, unitOfWorkMock, orderHeaderMock, emailServiceMock);
 		}
 
 		private static List<object> GetJsonOrders(IActionResult result)
@@ -1007,6 +1054,6 @@ namespace VaultShop.Web.Tests
 			return new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth"));
 		}
 
-		private sealed record TestController(OrderController Controller, Mock<IPaymentStatusService> PaymentStatusMock, Mock<IPaymentSessionService> PaymentSessionMock, Mock<IPaymentSessionService> MercadoPagoPaymentSessionMock, Mock<IPaymentRefundService> PaymentRefundMock, Mock<IUnitOfWork> UnitOfWorkMock, Mock<IOrderHeaderRepository> OrderHeaderMock, Mock<ITransactionalEmailService> EmailServiceMock);
+		private sealed record TestController(OrderController Controller, Mock<IPaymentStatusService> PaymentStatusMock, Mock<IPaymentSessionService> PaymentSessionMock, Mock<IPaymentSessionService> MercadoPagoPaymentSessionMock, Mock<IPaymentRefundService> PaymentRefundMock, Mock<IPaymentRefundService> MercadoPagoPaymentRefundMock, Mock<IUnitOfWork> UnitOfWorkMock, Mock<IOrderHeaderRepository> OrderHeaderMock, Mock<ITransactionalEmailService> EmailServiceMock);
 	}
 }

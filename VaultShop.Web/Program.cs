@@ -1,4 +1,4 @@
-using DotNetEnv;
+﻿using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
@@ -188,6 +188,7 @@ builder.Services.AddScoped<IPaymentRefundService, StripePaymentRefundService>();
 builder.Services.AddScoped<IPaymentSessionService, StripePaymentSessionService>();
 builder.Services.AddKeyedScoped<IPaymentSessionService, StripePaymentSessionService>(SD.PaymentMethodStripe);
 builder.Services.AddKeyedScoped<IPaymentSessionService, MercadoPagoPaymentSessionService>(SD.PaymentMethodMercadoPago);
+builder.Services.AddKeyedScoped<IPaymentRefundService, MercadoPagoRefundService>(SD.PaymentMethodMercadoPago);
 builder.Services.AddScoped<IPaymentStatusService, PaymentStatusService>();
 builder.Services.AddScoped<IPricingCalculatorService, PricingCalculatorService>();
 builder.Services.AddScoped<IRichTextSanitizer, RichTextSanitizer>();

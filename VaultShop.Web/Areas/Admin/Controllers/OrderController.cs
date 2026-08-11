@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -195,17 +195,31 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 					try
 					{
 						_paymentRefundService.RefundPaymentIntent(orderHeader.PaymentIntentId);
+						_unitOfWork.OrderHeader.UpdateStatus(orderHeader.Id, SD.StatusCancelled, SD.StatusRefunded);
 					}
 					catch (Exception ex)
 					{
-						_logger.LogError(ex, "Failed to create Stripe refund while cancelling order {OrderId}.", orderHeader.Id);
-						throw;
+						_logger.LogError(ex, "Failed to create Stripe refund while cancelling order {OrderId}. Order downgraded to Cancelled, manual refund review required.", orderHeader.Id);
+						_unitOfWork.OrderHeader.UpdateStatus(orderHeader.Id, SD.StatusCancelled);
 					}
-					_unitOfWork.OrderHeader.UpdateStatus(orderHeader.Id, SD.StatusCancelled, SD.StatusRefunded);
+				}
+				else if (orderHeader.PaymentMethod == SD.PaymentMethodMercadoPago && !string.IsNullOrWhiteSpace(orderHeader.PaymentIntentId))
+				{
+					try
+					{
+						_paymentSessionServiceProvider.GetRequiredKeyedService<IPaymentRefundService>(SD.PaymentMethodMercadoPago)
+							.RefundPaymentIntent(orderHeader.PaymentIntentId);
+						_unitOfWork.OrderHeader.UpdateStatus(orderHeader.Id, SD.StatusCancelled, SD.StatusRefunded);
+					}
+					catch (Exception ex)
+					{
+						_logger.LogError(ex, "Failed to create Mercado Pago refund while cancelling order {OrderId}. Order downgraded to Cancelled, manual refund review required.", orderHeader.Id);
+						_unitOfWork.OrderHeader.UpdateStatus(orderHeader.Id, SD.StatusCancelled);
+					}
 				}
 				else
 				{
-					_logger.LogWarning("Cancelled paid order {OrderId} without automated Stripe refund. PaymentMethod: {PaymentMethod}, HasPaymentIntent: {HasPaymentIntent}. Manual refund review required.", orderHeader.Id, orderHeader.PaymentMethod, !string.IsNullOrWhiteSpace(orderHeader.PaymentIntentId));
+					_logger.LogWarning("Cancelled paid order {OrderId} without automated refund. PaymentMethod: {PaymentMethod}, HasPaymentIntent: {HasPaymentIntent}. Manual refund review required.", orderHeader.Id, orderHeader.PaymentMethod, !string.IsNullOrWhiteSpace(orderHeader.PaymentIntentId));
 					_unitOfWork.OrderHeader.UpdateStatus(orderHeader.Id, SD.StatusCancelled);
 				}
 			}
