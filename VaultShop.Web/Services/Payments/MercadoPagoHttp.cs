@@ -6,6 +6,12 @@ namespace VaultShop.Web.Services.Payments
 	internal static class MercadoPagoHttp
 	{
 		internal const string HttpClientName = "MercadoPago";
+		internal const string IdempotencyKeyHeader = "X-Idempotency-Key";
+
+		internal static void AddIdempotencyKey(HttpRequestMessage request)
+		{
+			request.Headers.TryAddWithoutValidation(IdempotencyKeyHeader, Guid.NewGuid().ToString("N"));
+		}
 
 		internal static HttpClient CreateConfiguredClient(IHttpClientFactory httpClientFactory)
 		{

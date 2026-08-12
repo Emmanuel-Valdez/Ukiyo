@@ -12,7 +12,7 @@ namespace VaultShop.Web.Tests
 		[Fact]
 		public void CreateCheckoutSession_ReturnsPreferenceIdAndInitPoint()
 		{
-			var handler = new StubHttpMessageHandler((request, _) =>
+			var handler = new StubHttpMessageHandler((request, cancellationToken) =>
 			{
 				Assert.Equal(HttpMethod.Post, request.Method);
 				Assert.Equal("https://api.mercadopago.com/checkout/preferences", request.RequestUri?.ToString());
@@ -28,6 +28,8 @@ namespace VaultShop.Web.Tests
 				Assert.Contains("\"title\":\"Kimono\"", body);
 				Assert.Contains("\"unit_price\":100.5", body);
 				Assert.Contains("\"quantity\":2", body);
+				var idempotencyKey = Assert.Single<string>(request.Headers.GetValues("X-Idempotency-Key"));
+				Assert.True(Guid.TryParse(idempotencyKey, out var _), "X-Idempotency-Key should be a valid GUID.");
 
 				return new HttpResponseMessage(HttpStatusCode.Created)
 				{

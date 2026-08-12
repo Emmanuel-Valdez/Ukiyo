@@ -34,12 +34,14 @@ namespace VaultShop.Web.Services.Payments
 		public async Task RefundPaymentIntentAsync(string paymentIntentId)
 		{
 			var client = MercadoPagoHttp.CreateConfiguredClient(_httpClientFactory);
-			// ponytail: 30s cap, no retry - Mercado Pago has no idempotency key, retrying a refund POST risks double-refund.
+			// ponytail: 30s cap, no retry - X-Idempotency-Key is now required by Mercado Pago and generated fresh per call because the controller has no retry loop today.
 			client.Timeout = TimeSpan.FromSeconds(30);
-			using var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Post, $"/v1/payments/{Uri.EscapeDataString(paymentIntentId)}/refunds")
+			var request = new HttpRequestMessage(HttpMethod.Post, $"/v1/payments/{Uri.EscapeDataString(paymentIntentId)}/refunds")
 			{
 				Content = new StringContent("{}", Encoding.UTF8, "application/json")
-			});
+			};
+			MercadoPagoHttp.AddIdempotencyKey(request);
+			using var response = await client.SendAsync(request);
 			var body = await response.Content.ReadAsStringAsync();
 			MercadoPagoHttp.EnsureSuccess(response, body, "refund payment");
 		}

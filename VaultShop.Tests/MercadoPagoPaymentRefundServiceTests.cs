@@ -10,13 +10,17 @@ namespace VaultShop.Web.Tests
 		[Fact]
 		public async Task RefundPaymentIntentAsync_PostsToCorrectEndpoint()
 		{
-			var handler = new StubHttpMessageHandler((request, _) =>
+			var handler = new StubHttpMessageHandler((request, cancellationToken) =>
 			{
 				Assert.Equal(HttpMethod.Post, request.Method);
 				Assert.Equal("https://api.mercadopago.com/v1/payments/payment_mp/refunds", request.RequestUri?.ToString());
 				Assert.Equal("Bearer", request.Headers.Authorization?.Scheme);
 				Assert.Equal("test-token", request.Headers.Authorization?.Parameter);
 				Assert.Equal("{}", request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+				var idempotencyKey = Assert.Single<string>(request.Headers.GetValues("X-Idempotency-Key"));
+				Assert.NotNull(idempotencyKey);
+				bool parsed = Guid.TryParse(idempotencyKey, out var _);
+				Assert.True(parsed, "X-Idempotency-Key should be a valid GUID.");
 
 				return new HttpResponseMessage(HttpStatusCode.OK);
 			});

@@ -41,13 +41,15 @@ namespace VaultShop.Web.Services.Payments
 				}).ToArray()
 			};
 
-			using var response = client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "/checkout/preferences")
+			var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/checkout/preferences")
 			{
 				Content = new StringContent(JsonSerializer.Serialize(payload, new JsonSerializerOptions
 				{
 					DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
 				}), Encoding.UTF8, "application/json")
-			}).GetAwaiter().GetResult();
+			};
+			MercadoPagoHttp.AddIdempotencyKey(httpRequest);
+			using var response = client.SendAsync(httpRequest).GetAwaiter().GetResult();
 
 			var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 			MercadoPagoHttp.EnsureSuccess(response, body, "create checkout preference");
