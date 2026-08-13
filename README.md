@@ -126,7 +126,28 @@ ImageStorage__Minio__SecretKey
 ImageStorage__Minio__PublicBaseUrl
 ```
 
-> Note: Facebook login has been removed. Set Google__ClientId and Google__ClientSecret to enable Google sign-in.
+> Note: Facebook login has been removed; Google is the only supported external provider. Set Google__ClientId and Google__ClientSecret to enable Google sign-in.
+
+### Google OAuth Setup
+
+Google is the only external sign-in provider. It is disabled until both keys are set, and the login page then shows only the email/password form. To get credentials:
+
+1. Open https://console.cloud.google.com and create or select the project for VaultShop.
+2. Go to **APIs & Services → OAuth consent screen**.
+   - Choose **External** and fill in the app name and a support email.
+   - Add the scopes `openid`, `profile`, and `email`.
+   - Keep the app in **Testing** mode while developing and add your Google accounts as **Test users**; without test users Google rejects sign-in with `403`/`access_denied` even when the credentials are valid.
+3. Go to **Credentials → Create credentials → OAuth client ID → Web application** and add the exact authorized redirect URIs:
+   - `https://localhost:7189/signin-google` (use the local HTTPS port of your launch profile)
+   - `https://vaultshop.evaldez.ar/signin-google`
+   - `https://ukiyostudio.evaldez.ar/signin-google`
+   - The URI must match the request exactly, including scheme and port; the callback path is the default `/signin-google`.
+4. Copy the **Client ID** and **Client Secret** into the per-store `.env.compose` file (`.env.compose` is git-ignored — never commit real secrets):
+
+```env
+Google__ClientId=your-client-id
+Google__ClientSecret=your-client-secret
+```
 
 For local/demo email behavior, use `Email__Provider=Fake`. For real transactional email, use `Email__Provider=Resend` with a private `Resend__ApiKey` and verified sender.
 

@@ -144,7 +144,39 @@ namespace VaultShop.Web.Areas.Identity.Pages.Account
             }
             else
             {
-                // If the user does not have an account, then ask the user to create an account.
+                // Auto-link by verified email when the external login is not already linked.
+                var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+                var emailVerifiedValue = info.Principal.FindFirstValue("email_verified");
+                if (!string.IsNullOrWhiteSpace(email) &&
+                    bool.TryParse(emailVerifiedValue, out var emailVerified) &&
+                    emailVerified)
+                {
+                    var user = await _userManager.FindByEmailAsync(email);
+                    if (user != null)
+                    {
+                        var addLoginResult = await _userManager.AddLoginAsync(user, info);
+                        if (addLoginResult.Succeeded)
+                        {
+                            if (!user.EmailConfirmed)
+                            {
+                                user.EmailConfirmed = true;
+                                await _userManager.UpdateAsync(user);
+                            }
+
+                            await _userManager.AddToRoleAsync(user, SD.Role_Customer);
+                            _logger.LogInformation("Auto-linked {Email} to {LoginProvider} provider.", email, info.LoginProvider);
+                            await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
+                            return LocalRedirect(returnUrl);
+                        }
+
+                        foreach (var error in addLoginResult.Errors)
+                        {
+                            ModelState.AddModelError(string.Empty, error.Description);
+                        }
+                    }
+                }
+
+                // If the user does not have an account or cannot be auto-linked, ask the user to create an account.
                 ReturnUrl = returnUrl;
                 ProviderDisplayName = info.ProviderDisplayName;
                 if (info.Principal.HasClaim(c => c.Type == ClaimTypes.Email))

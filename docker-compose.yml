@@ -37,6 +37,8 @@ services:
       Email__AdminEmail: ${Email__AdminEmail:-}
       Resend__ApiKey: ${Resend__ApiKey:-re_replace_me}
       Resend__FromEmail: ${Resend__FromEmail:-onboarding@resend.dev}
+      Google__ClientId: ${Google__ClientId:-}
+      Google__ClientSecret: ${Google__ClientSecret:-}
       Seed__AdminEmail: ${Seed__AdminEmail:?Seed__AdminEmail is required when startup initialization is enabled}
       Seed__AdminPassword: ${Seed__AdminPassword:?Seed__AdminPassword is required when startup initialization is enabled}
       SiteUrl: ${SiteUrl:-http://localhost:8080}

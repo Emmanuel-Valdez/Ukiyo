@@ -1,4 +1,4 @@
-﻿using DotNetEnv;
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
@@ -77,6 +77,19 @@ builder.Services.AddRazorPages(options =>
 	options.Conventions.AuthorizeAreaFolder("Identity", "/Account/Manage");
 });
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
+
+// Google OAuth (optional: keys Google:ClientId/Google:ClientSecret, i.e. env vars Google__ClientId/Google__ClientSecret; only registered when both are set).
+var googleClientId = builder.Configuration["Google:ClientId"];
+var googleClientSecret = builder.Configuration["Google:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+	builder.Services.AddAuthentication()
+		.AddGoogle(options =>
+		{
+			options.ClientId = googleClientId;
+			options.ClientSecret = googleClientSecret;
+		});
+}
 builder.Services.Configure<SecurityStampValidatorOptions>(options =>
 {
 	options.ValidationInterval = TimeSpan.Zero;

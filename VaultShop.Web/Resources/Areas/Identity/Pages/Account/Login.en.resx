@@ -144,4 +144,13 @@
   <data name="UseLocalAccount" xml:space="preserve">
     <value>Use a Local Account to Log In</value>
   </data>
+  <data name="ExternalLoginAriaLabel" xml:space="preserve">
+    <value>Log in using your {0} account</value>
+  </data>
+  <data name="ExternalLoginButtonText" xml:space="preserve">
+    <value>Continue with {0}</value>
+  </data>
+  <data name="ExternalLoginSectionTitle" xml:space="preserve">
+    <value>Or Sign In With an External Service</value>
+  </data>
 </root>
