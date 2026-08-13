@@ -41,7 +41,7 @@ Selected current flows for backend/portfolio review.
 
 - ASP.NET Core 8 MVC
 - Entity Framework Core with PostgreSQL/Npgsql
-- ASP.NET Core Identity + Facebook OAuth
+- ASP.NET Core Identity + Google OAuth
 - Stripe Checkout
 - Resend email provider with fake/local email mode
 - Docker and Docker Compose
@@ -96,8 +96,8 @@ Stripe__WebhookSecret
 Payments__MercadoPagoEnabled
 Payments__MercadoPagoAccessToken
 Payments__MercadoPagoWebhookSecret
-Facebook__AppId
-Facebook__AppSecret
+Google__ClientId
+Google__ClientSecret
 Email__Provider
 Email__UseFakeEmailSender
 Resend__ApiKey
@@ -126,6 +126,8 @@ ImageStorage__Minio__SecretKey
 ImageStorage__Minio__PublicBaseUrl
 ```
 
+> Note: Facebook login has been removed. Set Google__ClientId and Google__ClientSecret to enable Google sign-in.
+
 For local/demo email behavior, use `Email__Provider=Fake`. For real transactional email, use `Email__Provider=Resend` with a private `Resend__ApiKey` and verified sender.
 
 Mercado Pago is opt-in via `Payments__MercadoPagoEnabled`; it requires a private `Payments__MercadoPagoAccessToken` and `Payments__MercadoPagoWebhookSecret` and is disabled by default.
@@ -141,7 +143,7 @@ Prerequisites:
 - .NET 8 SDK
 - PostgreSQL or Docker Compose
 - Stripe test keys if testing checkout payments
-- Facebook OAuth credentials if testing Facebook login
+- Google OAuth credentials if testing Google login
 
 1. Restore dependencies.
 

@@ -32,8 +32,6 @@ services:
       Payments__MercadoPagoEnabled: ${Payments__MercadoPagoEnabled:-false}
       Payments__MercadoPagoAccessToken: ${Payments__MercadoPagoAccessToken:-}
       Payments__MercadoPagoWebhookSecret: ${Payments__MercadoPagoWebhookSecret:-}
-      Facebook__AppId: ${Facebook__AppId:-}
-      Facebook__AppSecret: ${Facebook__AppSecret:-}
       Email__Provider: ${Email__Provider:-Fake}
       Email__UseFakeEmailSender: ${Email__UseFakeEmailSender:-true}
       Email__AdminEmail: ${Email__AdminEmail:-}

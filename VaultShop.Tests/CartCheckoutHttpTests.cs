@@ -15,12 +15,12 @@ namespace VaultShop.Web.Tests;
 public class CartCheckoutHttpTests
 {
     [Fact]
-    public async Task StartupWithoutFacebookConfiguration_DoesNotRegisterFacebook()
+    public async Task StartupWithoutGoogleConfiguration_DoesNotRegisterGoogle()
     {
         using var factory = new CustomWebApplicationFactory();
         var schemeProvider = factory.Services.GetRequiredService<IAuthenticationSchemeProvider>();
 
-        Assert.Null(await schemeProvider.GetSchemeAsync("Facebook"));
+        Assert.Null(await schemeProvider.GetSchemeAsync("Google"));
     }
 
     [Fact]

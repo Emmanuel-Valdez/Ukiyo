@@ -194,16 +194,6 @@ builder.Services.AddScoped<IPricingCalculatorService, PricingCalculatorService>(
 builder.Services.AddScoped<IRichTextSanitizer, RichTextSanitizer>();
 builder.Services.AddScoped<ITransactionalEmailService, TransactionalEmailService>();
 
-var facebookAppId = builder.Configuration["Facebook:AppId"];
-var facebookAppSecret = builder.Configuration["Facebook:AppSecret"];
-if (!string.IsNullOrWhiteSpace(facebookAppId) && !string.IsNullOrWhiteSpace(facebookAppSecret))
-{
-	builder.Services.AddAuthentication().AddFacebook(option =>
-	{
-		option.AppId = facebookAppId;
-		option.AppSecret = facebookAppSecret;
-	});
-}
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
