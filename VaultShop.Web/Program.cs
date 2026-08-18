@@ -1,5 +1,6 @@
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OAuth.Claims;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -89,6 +90,7 @@ if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(goo
 		{
 			options.ClientId = googleClientId;
 			options.ClientSecret = googleClientSecret;
+			options.ClaimActions.MapJsonKey("email_verified", "verified_email");
 		});
 }
 builder.Services.Configure<SecurityStampValidatorOptions>(options =>
@@ -272,6 +274,10 @@ app.MapGet("/site.webmanifest", (IOptions<BrandingOptions> brandingOptions) =>
 		display = "standalone"
 	}, contentType: "application/manifest+json");
 });
+app.MapControllerRoute(
+	name: "privacy",
+	pattern: "privacy",
+	defaults: new { area = "Customer", controller = "Home", action = "Privacy" });
 app.MapControllerRoute(
 	name: "default",
 	pattern: "{culture=es-AR}/{area=Customer}/{controller=Home}/{action=Index}/{id?}");

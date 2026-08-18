@@ -130,7 +130,7 @@
     <value>1. Information we collect</value>
   </data>
   <data name="Section1Body" xml:space="preserve">
-    <value>We collect the information you share with us when you shop or contact us, such as your name, email address, phone number, shipping address, and the details needed to manage payment. We use this information to prepare your order and provide better support.</value>
+    <value>We collect the information you share with us when you shop or contact us, such as your name, email address, phone number, shipping address, and the details needed to manage payment. We use this information to prepare your order and provide better support. If you sign in with your Google account, we also receive the basic profile information you authorize when signing in (your name and email address).</value>
   </data>
   <data name="Section2Title" xml:space="preserve">
     <value>2. How we use your information</value>

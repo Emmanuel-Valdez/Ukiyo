@@ -121,7 +121,7 @@
     <value />
   </data>
   <data name="AssociateYour" xml:space="preserve">
-    <value>Asocia Tu</value>
+    <value>Asociá tu cuenta con</value>
   </data>
   <data name="City" xml:space="preserve">
     <value>Localidad</value>
@@ -142,7 +142,7 @@
     <value>Código Postal</value>
   </data>
   <data name="Register" xml:space="preserve">
-    <value>Resgistrar</value>
+    <value>Registrar</value>
   </data>
   <data name="State" xml:space="preserve">
     <value>Provincia</value>

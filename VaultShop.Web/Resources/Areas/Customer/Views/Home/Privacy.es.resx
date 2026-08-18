@@ -130,7 +130,7 @@
     <value>1. Datos que recopilamos</value>
   </data>
   <data name="Section1Body" xml:space="preserve">
-    <value>Recopilamos la información que nos compartís al comprar o contactarnos, como tu nombre, correo electrónico, teléfono, dirección de envío y datos necesarios para gestionar el pago. Usamos esta información para preparar tu pedido y darte una mejor atención.</value>
+    <value>Recopilamos la información que nos compartís al comprar o contactarnos, como tu nombre, correo electrónico, teléfono, dirección de envío y datos necesarios para gestionar el pago. Usamos esta información para preparar tu pedido y darte una mejor atención. Si iniciás sesión con tu cuenta de Google, también recibimos los datos básicos de tu perfil (nombre y correo electrónico) que autorizás al momento de iniciar sesión.</value>
   </data>
   <data name="Section2Title" xml:space="preserve">
     <value>2. Cómo usamos tus datos</value>
