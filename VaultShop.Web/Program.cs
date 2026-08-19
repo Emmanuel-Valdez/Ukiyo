@@ -90,6 +90,7 @@ if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(goo
 		{
 			options.ClientId = googleClientId;
 			options.ClientSecret = googleClientSecret;
+			options.ClaimActions.MapJsonKey("email_verified", "email_verified");
 			options.ClaimActions.MapJsonKey("email_verified", "verified_email");
 		});
 }

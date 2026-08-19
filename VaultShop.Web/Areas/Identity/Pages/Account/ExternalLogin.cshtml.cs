@@ -3,6 +3,7 @@
 #nullable disable
 
 using System;
+using System.Linq;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Text;
@@ -147,6 +148,10 @@ namespace VaultShop.Web.Areas.Identity.Pages.Account
                 // Auto-link by verified email when the external login is not already linked.
                 var email = info.Principal.FindFirstValue(ClaimTypes.Email);
                 var emailVerifiedValue = info.Principal.FindFirstValue("email_verified");
+                _logger.LogInformation(
+                    "ExternalLogin claims for {Email}: {Claims}",
+                    email,
+                    string.Join("; ", info.Principal.Claims.Select(c => $"{c.Type}={c.Value}")));
                 if (!string.IsNullOrWhiteSpace(email) &&
                     bool.TryParse(emailVerifiedValue, out var emailVerified) &&
                     emailVerified)
