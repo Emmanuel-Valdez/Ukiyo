@@ -280,6 +280,10 @@ app.MapControllerRoute(
 	pattern: "privacy",
 	defaults: new { area = "Customer", controller = "Home", action = "Privacy" });
 app.MapControllerRoute(
+	name: "terms",
+	pattern: "terms",
+	defaults: new { area = "Customer", controller = "Home", action = "Terms" });
+app.MapControllerRoute(
 	name: "default",
 	pattern: "{culture=es-AR}/{area=Customer}/{controller=Home}/{action=Index}/{id?}");
 app.Run();

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Terms" xml:space="preserve">
+    <value>Términos y Condiciones</value>
+  </data>
+  <data name="MetaDescription" xml:space="preserve">
+    <value>Términos y Condiciones: las condiciones que se aplican al uso de nuestra tienda.</value>
+  </data>
+  <data name="MetaKeywords" xml:space="preserve">
+    <value>términos y condiciones, términos de servicio, condiciones de servicio</value>
+  </data>
+  <data name="Section1Title" xml:space="preserve">
+    <value>1. Aceptación de los términos</value>
+  </data>
+  <data name="Section1Body" xml:space="preserve">
+    <value>Al acceder o utilizar nuestra tienda, aceptas quedar sujeto a estos Términos y Condiciones. Si no estás de acuerdo con alguna parte de ellos, por favor no utilices el servicio.</value>
+  </data>
+  <data name="Section2Title" xml:space="preserve">
+    <value>2. Uso del servicio</value>
+  </data>
+  <data name="Section2Body" xml:space="preserve">
+    <value>Te comprometes a utilizar el servicio solo con fines lícitos, de forma que no infrinja los derechos de terceros y que no restrinja ni impida el uso de la tienda por parte de otros usuarios.</value>
+  </data>
+  <data name="Section3Title" xml:space="preserve">
+    <value>3. Cuentas y seguridad</value>
+  </data>
+  <data name="Section3Body" xml:space="preserve">
+    <value>Al crear una cuenta, eres responsable de mantener confidenciales tus credenciales, de toda la actividad que ocurra bajo tu cuenta y del correo electrónico que proporciones al registrarte. Si ingresas un correo que no te pertenece, la persona dueña de esa dirección podría recuperar el acceso a la cuenta mediante la opción "olvidé mi contraseña" o al iniciar sesión con Google. Puedes cambiar tu correo al correcto, o a cualquier otro del que dispongas, en cualquier momento desde la sección Correo electrónico de la configuración de tu cuenta. Notifícanos si sospechas de un uso no autorizado.</value>
+  </data>
+  <data name="Section4Title" xml:space="preserve">
+    <value>4. Pedidos y pagos</value>
+  </data>
+  <data name="Section4Body" xml:space="preserve">
+    <value>Todos los pedidos están sujetos a disponibilidad y a la confirmación del precio al momento de la compra. Podemos rechazar o cancelar un pedido en casos como errores de precio, fraude sospechoso o falta de stock.</value>
+  </data>
+  <data name="Section5Title" xml:space="preserve">
+    <value>5. Envíos y devoluciones</value>
+  </data>
+  <data name="Section5Body" xml:space="preserve">
+    <value>Los plazos de entrega son estimados y pueden variar. Puedes devolver productos de acuerdo con nuestra política de devoluciones, siempre que los artículos estén sin uso, en su embalaje original y dentro del plazo aplicable.</value>
+  </data>
+  <data name="Section6Title" xml:space="preserve">
+    <value>6. Limitación de responsabilidad</value>
+  </data>
+  <data name="Section6Body" xml:space="preserve">
+    <value>En la máxima medida permitida por la ley, no somos responsables por daños indirectos, incidentales o emergentes derivados del uso del servicio o de la compra de productos.</value>
+  </data>
+  <data name="Section7Title" xml:space="preserve">
+    <value>7. Cambios en estos términos</value>
+  </data>
+  <data name="Section7Body" xml:space="preserve">
+    <value>Podemos actualizar estos términos periódicamente. El uso continuado del servicio después de publicados los cambios implica que aceptas los términos modificados.</value>
+  </data>
+</root>

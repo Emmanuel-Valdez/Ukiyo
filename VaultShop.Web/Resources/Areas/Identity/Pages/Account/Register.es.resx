@@ -132,6 +132,9 @@
   <data name="Email" xml:space="preserve">
     <value>Correo Electrónico</value>
   </data>
+  <data name="EmailOwnershipNote" xml:space="preserve">
+    <value>Asegurate de usar un correo que te pertenezca: si no es tuyo, su dueño podría recuperar la cuenta. Podés cambiarlo después desde tu perfil.</value>
+  </data>
   <data name="Name" xml:space="preserve">
     <value>Nombre</value>
   </data>

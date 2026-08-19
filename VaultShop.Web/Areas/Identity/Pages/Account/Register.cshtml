@@ -26,6 +26,9 @@
 						<label asp-for="Input.Email" class="ms-2 text-muted">@Localizer["Email"]</label>
 						<span asp-validation-for="Input.Email" class="text-danger"></span>
 					</div>
+					<div class="col-md-12 mb-3 small text-muted">
+						@Localizer["EmailOwnershipNote"]
+					</div>
 					<div class="form-floating mb-3 col-md-12 shadow">
 						<input asp-for="Input.Name" class="form-control" placeholder="Name" />
 						<label asp-for="Input.Name" class="ms-2 text-muted">@Localizer["Name"]</label>

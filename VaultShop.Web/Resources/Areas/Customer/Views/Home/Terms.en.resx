@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Terms" xml:space="preserve">
+    <value>Terms of Service</value>
+  </data>
+  <data name="MetaDescription" xml:space="preserve">
+    <value>Terms of Service: the conditions that apply to your use of our store.</value>
+  </data>
+  <data name="MetaKeywords" xml:space="preserve">
+    <value>terms of service, terms and conditions, terms, service conditions</value>
+  </data>
+  <data name="Section1Title" xml:space="preserve">
+    <value>1. Acceptance of terms</value>
+  </data>
+  <data name="Section1Body" xml:space="preserve">
+    <value>By accessing or using our store, you agree to be bound by these Terms of Service. If you do not agree with any part of them, please do not use the service.</value>
+  </data>
+  <data name="Section2Title" xml:space="preserve">
+    <value>2. Use of the service</value>
+  </data>
+  <data name="Section2Body" xml:space="preserve">
+    <value>You agree to use the service only for lawful purposes, in a way that does not infringe the rights of others, and without restricting or inhibiting anyone else's use of the store.</value>
+  </data>
+  <data name="Section3Title" xml:space="preserve">
+    <value>3. Accounts and security</value>
+  </data>
+  <data name="Section3Body" xml:space="preserve">
+    <value>When you create an account, you are responsible for keeping your credentials confidential, for all activity that occurs under your account, and for the email address you provide at registration. If you enter an email address that does not belong to you, the rightful owner of that address could recover access to the account through the "forgot password" option or by signing in with Google. You can change your email to the correct one, or to any other address you own, at any time from the Email section of your account settings. Notify us if you suspect unauthorized use.</value>
+  </data>
+  <data name="Section4Title" xml:space="preserve">
+    <value>4. Orders and payments</value>
+  </data>
+  <data name="Section4Body" xml:space="preserve">
+    <value>All orders are subject to availability and confirmation of the price at the time of purchase. We may decline or cancel an order in cases such as pricing errors, suspected fraud, or stock unavailability.</value>
+  </data>
+  <data name="Section5Title" xml:space="preserve">
+    <value>5. Shipping and returns</value>
+  </data>
+  <data name="Section5Body" xml:space="preserve">
+    <value>Delivery times are estimates and may vary. You may return products in accordance with our return policy, provided the items are unused, in their original packaging, and within the applicable period.</value>
+  </data>
+  <data name="Section6Title" xml:space="preserve">
+    <value>6. Limitation of liability</value>
+  </data>
+  <data name="Section6Body" xml:space="preserve">
+    <value>To the maximum extent permitted by law, we are not liable for indirect, incidental, or consequential damages arising from your use of the service or the purchase of products.</value>
+  </data>
+  <data name="Section7Title" xml:space="preserve">
+    <value>7. Changes to these terms</value>
+  </data>
+  <data name="Section7Body" xml:space="preserve">
+    <value>We may update these terms from time to time. Continued use of the service after changes are posted means you accept the revised terms.</value>
+  </data>
+</root>

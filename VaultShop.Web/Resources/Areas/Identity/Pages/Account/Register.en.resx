@@ -132,6 +132,9 @@
   <data name="Email" xml:space="preserve">
     <value>Email</value>
   </data>
+  <data name="EmailOwnershipNote" xml:space="preserve">
+    <value>Make sure the email belongs to you: if it doesn't, its rightful owner could recover the account. You can change it later from your profile.</value>
+  </data>
   <data name="Name" xml:space="preserve">
     <value>Name</value>
   </data>

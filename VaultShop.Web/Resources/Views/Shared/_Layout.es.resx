@@ -201,6 +201,9 @@
   <data name="Privacy" xml:space="preserve">
     <value>Privacidad</value>
   </data>
+  <data name="Terms" xml:space="preserve">
+    <value>Términos y Condiciones</value>
+  </data>
   <data name="Product" xml:space="preserve">
     <value>Producto</value>
   </data>
