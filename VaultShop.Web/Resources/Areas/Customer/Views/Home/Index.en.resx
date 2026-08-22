@@ -129,6 +129,9 @@
   <data name="MetaDescription" xml:space="preserve">
     <value>Textile designs for garment making, embroidery, printing, and personalization, carefully made in Argentina.</value>
   </data>
+  <data name="HomePurposeText" xml:space="preserve">
+    <value>{0} online store: textile designs for garment making, embroidery, printing, and personalization, carefully made in Argentina.</value>
+  </data>
   <data name="MetaKeywords" xml:space="preserve">
     <value>textile design, garment making, embroidery, printing, personalization, accessories, Argentina</value>
   </data>

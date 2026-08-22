@@ -129,6 +129,9 @@
   <data name="MetaDescription" xml:space="preserve">
     <value>Diseños textiles para confección, bordado, estampado y personalización, hechos con cuidado en Argentina.</value>
   </data>
+  <data name="HomePurposeText" xml:space="preserve">
+    <value>Tienda online de {0}: diseños textiles para confección, bordado, estampado y personalización, hechos con cuidado en Argentina.</value>
+  </data>
   <data name="MetaKeywords" xml:space="preserve">
     <value>diseño textil, confección, bordado, estampado, personalización, accesorios, Argentina</value>
   </data>
