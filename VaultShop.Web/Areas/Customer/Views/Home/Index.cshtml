@@ -8,14 +8,9 @@
     ViewData["Description"] = Localizer["MetaDescription"];
     ViewData["Keywords"] = Localizer["MetaKeywords"];
 
-    var products = Model?.Products.ToList() ?? new List<Product>();
+    List<Product> products = Model?.Products.ToList() ?? [];
     var featuredProducts = Model?.FeaturedProducts.ToList() ?? new List<Product>();
-    var categories = products
-        .Where(product => product.Category != null && !string.IsNullOrWhiteSpace(product.Category.Name))
-        .GroupBy(product => product.Category.Id)
-        .Select(group => group.First().Category)
-        .OrderBy(category => category.Name)
-        .ToList();
+    IEnumerable<Category> categories = Model?.Categories ?? [];
 }
 
 <section class="storefront-section">
@@ -136,6 +131,7 @@ else
 				</div>
 			}
 		</div>
+		<partial name="_Pager" model="Model!.Products" />
 	</section>
 
 	<section class="storefront-section pb-4" aria-labelledby="trust-strip-heading">

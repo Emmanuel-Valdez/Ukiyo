@@ -28,6 +28,7 @@ using VaultShop.Web.Services.Email;
 using VaultShop.Web.Services.ImageStorage;
 using VaultShop.Web.Services.ProductImages;
 using VaultShop.Web.Services.Payments;
+using VaultShop.Web.Services.Pagination;
 using VaultShop.Web.Services.Pricing;
 using VaultShop.Web.Services.RichText;
 
@@ -67,6 +68,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
 builder.Services.Configure<BrandingOptions>(builder.Configuration.GetSection("Branding"));
 builder.Services.Configure<ThemeOptions>(builder.Configuration.GetSection("Theme"));
+builder.Services.Configure<PaginationOptions>(builder.Configuration.GetSection("Pagination"));
 
 var dataProtectionKeysPath = builder.Configuration["DataProtection:KeysPath"];
 if (!string.IsNullOrWhiteSpace(dataProtectionKeysPath))

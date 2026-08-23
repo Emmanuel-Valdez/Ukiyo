@@ -2,13 +2,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Globalization;
 using System.Security.Claims;
 using VaultShop.DataAccess.Repository.IRepository;
 using VaultShop.Models;
+using VaultShop.Models.Pagination;
 using VaultShop.Models.ViewModels;
 using VaultShop.Utility;
+using VaultShop.Web.Services.Pagination;
 
 
 
@@ -22,30 +25,45 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 		private readonly ILogger<HomeController> _logger;
 		private readonly IUnitOfWork _unitOfWork;
 		private readonly IStringLocalizer<HomeController> _localizer;
+		private readonly PaginationOptions _paginationOptions;
 
-		public HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWork, IStringLocalizer<HomeController> localizer)
+		public HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWork, IStringLocalizer<HomeController> localizer, IOptions<PaginationOptions> paginationOptions)
 		{
 			_localizer = localizer;
 			_logger = logger;
 			_unitOfWork = unitOfWork;
+			_paginationOptions = paginationOptions.Value;
 		}
 
-		public IActionResult Index()
+		public IActionResult Index(int pageNumber = 1)
 		{
 			var productList = _unitOfWork.Product
 				.GetAll(u => u.IsDeleted == false && u.IsAvailableInStore == true, includeProperties: "Category,ProductImages")
+				.OrderBy(u => u.Id)
 				.ToList();
 			var featuredProducts = productList
 				.Where(u => u.IsFeatured)
 				.OrderBy(u => u.FeaturedSortOrder)
 				.ThenBy(u => u.Id)
 				.ToList();
-			var culture = CultureInfo.CurrentCulture.Name;
+			var categories = productList
+				.Where(p => p.Category != null && !string.IsNullOrWhiteSpace(p.Category.Name))
+				.GroupBy(p => p.Category.Id)
+				.Select(g => g.First().Category)
+				.OrderBy(c => c.Name)
+				.ToList();
+
+			var pagedProducts = PagedList<Product>.Create(productList, pageNumber, _paginationOptions.PageSize);
+			if (productList.Count > 0 && pageNumber > pagedProducts.TotalPages)
+			{
+				return RedirectToAction(nameof(Index), new { pageNumber = pagedProducts.TotalPages });
+			}
 
 			return View(new HomeIndexVM
 			{
-				Products = productList,
-				FeaturedProducts = featuredProducts
+				Products = pagedProducts,
+				FeaturedProducts = featuredProducts,
+				Categories = categories
 			});
 		}
 
@@ -145,7 +163,7 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 		}
 
 
-		public IActionResult Search(string searchString)
+		public IActionResult Search(string searchString, int pageNumber = 1)
 		{
 			if (string.IsNullOrWhiteSpace(searchString))
 			{
@@ -155,6 +173,7 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 
 			var products = _unitOfWork.Product
 				.GetAll(u => u.IsDeleted == false && u.IsAvailableInStore == true, includeProperties: "Category,ProductImages")
+				.OrderBy(u => u.Id)
 				.ToList();
 
 			var compareInfo = CultureInfo.CurrentCulture.CompareInfo;
@@ -164,6 +183,7 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 				.Where(p => compareInfo.IndexOf(p.Name, searchString, compareOptions) >= 0
 						 || compareInfo.IndexOf(p.Category?.Name ?? string.Empty, searchString, compareOptions) >= 0
 						 || compareInfo.IndexOf(p.Description ?? string.Empty, searchString, compareOptions) >= 0)
+				.OrderBy(p => p.Id)
 				.ToList();
 
 			if (searchProductList.Count == 0)
@@ -172,7 +192,13 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 				return RedirectToAction("Index");
 			}
 
-			return View(searchProductList);
+			var pagedProducts = PagedList<Product>.Create(searchProductList, pageNumber, _paginationOptions.PageSize);
+			if (pageNumber > pagedProducts.TotalPages)
+			{
+				return RedirectToAction(nameof(Search), new { searchString, pageNumber = pagedProducts.TotalPages });
+			}
+
+			return View(pagedProducts);
 		}
 
 		public IActionResult SetLanguage(string culture, string returnUrl)
