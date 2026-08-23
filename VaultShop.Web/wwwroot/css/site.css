@@ -42,6 +42,28 @@ html {
     --bs-secondary-rgb: 232, 234, 242;
     --bs-secondary-color: #c7cfdd;
     --bs-tertiary-color: #aeb8c8;
+    /* Components whose active state uses var(--primary) as bg collide with the
+       near-white --primary redefined for dark mode. Re-anchor active states to
+       the brand primary token with a light label. Covers pager + Identity nav. */
+    --bs-pagination-active-bg: var(--theme-primary);
+    --bs-pagination-active-border-color: var(--theme-primary);
+    --bs-pagination-active-color: #e8eaf2;
+    --bs-nav-pills-link-active-bg: var(--theme-primary);
+    --bs-nav-pills-link-active-color: #e8eaf2;
+    --bs-list-group-active-bg: var(--theme-primary);
+    --bs-list-group-active-border-color: var(--theme-primary);
+    --bs-list-group-active-color: #e8eaf2;
+    --bs-progress-bar-bg: var(--theme-primary);
+}
+
+[data-bs-theme=dark] .form-check-input:checked,
+[data-bs-theme=dark] .form-check-input[type=checkbox]:indeterminate {
+    background-color: var(--theme-primary);
+    border-color: var(--theme-primary);
+}
+
+#productos {
+    scroll-margin-top: 5rem;
 }
 
 @media (min-width: 768px) {
