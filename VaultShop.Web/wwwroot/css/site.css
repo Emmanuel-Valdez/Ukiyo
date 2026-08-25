@@ -56,6 +56,31 @@ html {
     --bs-progress-bar-bg: var(--theme-primary);
 }
 
+/* Bootstrap Litera redeclares the same active vars inside each component
+   (.pagination, .nav-pills, .list-group, .progress) as var(--primary), so the
+   html-level overrides above are shadowed. Re-anchor at component scope. */
+[data-bs-theme=dark] .pagination {
+    --bs-pagination-active-bg: var(--theme-primary);
+    --bs-pagination-active-border-color: var(--theme-primary);
+    --bs-pagination-active-color: #e8eaf2;
+}
+
+[data-bs-theme=dark] .nav-pills {
+    --bs-nav-pills-link-active-bg: var(--theme-primary);
+    --bs-nav-pills-link-active-color: #e8eaf2;
+}
+
+[data-bs-theme=dark] .list-group {
+    --bs-list-group-active-bg: var(--theme-primary);
+    --bs-list-group-active-border-color: var(--theme-primary);
+    --bs-list-group-active-color: #e8eaf2;
+}
+
+[data-bs-theme=dark] .progress,
+[data-bs-theme=dark] .progress-stacked {
+    --bs-progress-bar-bg: var(--theme-primary);
+}
+
 [data-bs-theme=dark] .form-check-input:checked,
 [data-bs-theme=dark] .form-check-input[type=checkbox]:indeterminate {
     background-color: var(--theme-primary);
