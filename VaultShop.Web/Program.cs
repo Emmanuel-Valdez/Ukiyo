@@ -277,14 +277,15 @@ app.MapGet("/site.webmanifest", (IOptions<BrandingOptions> brandingOptions) =>
 		display = "standalone"
 	}, contentType: "application/manifest+json");
 });
-app.MapControllerRoute(
-	name: "privacy",
-	pattern: "privacy",
-	defaults: new { area = "Customer", controller = "Home", action = "Privacy" });
-app.MapControllerRoute(
-	name: "terms",
-	pattern: "terms",
-	defaults: new { area = "Customer", controller = "Home", action = "Terms" });
+// bare /privacy y /terms existen solo para Google OAuth; redirigen a URL con cultura.
+app.MapGet("/privacy", (HttpContext ctx) => {
+	var culture = CultureInfo.CurrentCulture.Name is "en-US" or "es-AR" ? CultureInfo.CurrentCulture.Name : "es-AR";
+	return Results.Redirect($"/{culture}/Customer/Home/Privacy{ctx.Request.QueryString}", false);
+});
+app.MapGet("/terms", (HttpContext ctx) => {
+	var culture = CultureInfo.CurrentCulture.Name is "en-US" or "es-AR" ? CultureInfo.CurrentCulture.Name : "es-AR";
+	return Results.Redirect($"/{culture}/Customer/Home/Terms{ctx.Request.QueryString}", false);
+});
 app.MapControllerRoute(
 	name: "default",
 	pattern: "{culture=es-AR}/{area=Customer}/{controller=Home}/{action=Index}/{id?}");
