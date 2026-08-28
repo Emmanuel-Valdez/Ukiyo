@@ -54,6 +54,15 @@
 
 		<a asp-area="Admin" asp-controller="Order" asp-action="Details" asp-route-orderId="@Model.Id" class="btn btn-outline-primary mt-3 me-2">
 			@Localizer["ViewMyOrder"]
+
+
+		</a>
+
+
+		<a asp-area="Admin" asp-controller="Order" asp-action="Summary" asp-route-orderId="@Model.Id" class="btn btn-light text-dark border mt-3 me-2">
+			@Localizer["ViewOrderSummary"]
+
+
 		</a>
 
 		<a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-primary  mt-3">
@@ -61,3 +70,4 @@
 	</a>
 	</div>
 </div>
+

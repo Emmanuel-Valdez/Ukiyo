@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -13,6 +13,7 @@ using VaultShop.Models.ViewModels;
 using VaultShop.Utility;
 using VaultShop.Web.Services.Email;
 using VaultShop.Web.Services.Payments;
+using VaultShop.Web.Services.Billing;
 
 namespace VaultShop.Web.Areas.Admin.Controllers
 {
@@ -32,9 +33,13 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 		private readonly IConfiguration _configuration;
 		private readonly ITransactionalEmailService _emailService;
 
-		public OrderController(IUnitOfWork unitOfWork, IStringLocalizer<OrderController> localizer, ILogger<OrderController> logger, 
+		private readonly IOrderSummaryService _orderSummaryService;
+		private readonly IOrderSummaryPdfGenerator _pdfGenerator;
+
+		public OrderController(IUnitOfWork unitOfWork, IStringLocalizer<OrderController> localizer, ILogger<OrderController> logger,
 			IServiceProvider paymentSessionServiceProvider, IPaymentRefundService paymentRefundService, IPaymentStatusService paymentStatusService,
-			IWebHostEnvironment environment, IConfiguration configuration, ITransactionalEmailService emailService)
+			IWebHostEnvironment environment, IConfiguration configuration, ITransactionalEmailService emailService,
+			IOrderSummaryService orderSummaryService, IOrderSummaryPdfGenerator pdfGenerator)
 		{
 			_unitOfWork = unitOfWork;
 			_localizer = localizer;
@@ -45,7 +50,10 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 			_environment = environment;
 			_configuration = configuration;
 			_emailService = emailService;
+			_orderSummaryService = orderSummaryService;
+			_pdfGenerator = pdfGenerator;
 		}
+
 
 		public IActionResult Index()
 		{
@@ -72,6 +80,29 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 			ViewData["AllowDevelopmentManualPaymentApproval"] = ManualPaymentApprovalEnabled();
 			PopulateBankTransferViewData();
 			return View(OrderVM);
+		}
+
+		public IActionResult Summary(int orderId)
+		{
+			var summary = _orderSummaryService.GetSummary(orderId, User);
+			if (summary == null)
+			{
+				return NotFound();
+			}
+
+			return View(summary);
+		}
+
+		public IActionResult DownloadSummary(int orderId)
+		{
+			var summary = _orderSummaryService.GetSummary(orderId, User);
+			if (summary == null)
+			{
+				return NotFound();
+			}
+
+			var pdf = _pdfGenerator.Generate(summary);
+			return File(pdf, "application/pdf", $"order-{orderId}-summary.pdf");
 		}
 
 		[Authorize(Roles = SD.Role_Admin + "," + SD.Role_Employee)]
@@ -643,3 +674,7 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 		}
 	}
 }
+
+
+
+

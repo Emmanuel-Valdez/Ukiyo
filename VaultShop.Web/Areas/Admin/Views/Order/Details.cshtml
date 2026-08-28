@@ -93,8 +93,15 @@
 						<i class="bi bi-cart3"></i> &nbsp; @Localizer["OrderSummary"]
 					</div>
 					<div class="col-12 col-md-4 offset-md-2 text-right">
-						<a asp-action="Index" class="btn btn-outline-info form-control btn-sm">@Localizer["BackToOrders"]</a>
-					</div>
+						<div class="d-flex gap-2 justify-content-end">
+
+						<a asp-action="Summary" asp-route-orderId="@Model.OrderHeader.Id" class="btn btn-light text-dark form-control btn-sm">@Localizer["ViewOrderSummary"]</a>
+
+						<a asp-action="DownloadSummary" asp-route-orderId="@Model.OrderHeader.Id" class="btn btn-success form-control btn-sm">@Localizer["DownloadSummaryPdf"]</a>
+
+						<a asp-action="Index" class="btn btn-info text-dark form-control btn-sm">@Localizer["BackToOrders"]</a>
+
+						</div>					</div>
 				</div>
 			</div>
 			<div class="card-body">
@@ -570,3 +577,5 @@
 
 
 }
+
+

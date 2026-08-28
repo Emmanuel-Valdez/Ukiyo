@@ -167,6 +167,15 @@ namespace VaultShop.Web.Services.Checkout
 			{
 				shoppingCartVM.OrderHeader.PaymentMethod = null;
 				shoppingCartVM.OrderHeader.CompanyId = applicationUser.CompanyId;
+
+				var company = _unitOfWork.Company.Get(c => c.Id == applicationUser.CompanyId);
+				if (company != null)
+				{
+					shoppingCartVM.OrderHeader.RazonSocialSnapshot = company.RazonSocial;
+					shoppingCartVM.OrderHeader.DomicilioFiscalSnapshot = company.DomicilioFiscal;
+					shoppingCartVM.OrderHeader.CuitSnapshot = company.Cuit;
+				}
+
 				shoppingCartVM.OrderHeader.PaymentStatus = SD.PaymentStatusDelayedPayment;
 				shoppingCartVM.OrderHeader.OrderStatus = SD.StatusApproved;
 				shoppingCartVM.OrderHeader.PaymentDueDate = DateOnly.FromDateTime(shoppingCartVM.OrderHeader.OrderDate.AddDays(SD.CompanyPaymentDueDays));

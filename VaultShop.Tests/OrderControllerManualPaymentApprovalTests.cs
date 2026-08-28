@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using System.Net.Http;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Hosting;
@@ -18,6 +18,7 @@ using VaultShop.Utility;
 using VaultShop.Web.Areas.Admin.Controllers;
 using VaultShop.Web.Services.Email;
 using VaultShop.Web.Services.Payments;
+using VaultShop.Web.Services.Billing;
 
 namespace VaultShop.Web.Tests
 {
@@ -995,6 +996,8 @@ namespace VaultShop.Web.Tests
 			var paymentRefundMock = new Mock<IPaymentRefundService>();
 			var mercadoPagoPaymentRefundMock = new Mock<IPaymentRefundService>();
 			var emailServiceMock = new Mock<ITransactionalEmailService>();
+			var orderSummaryServiceMock = new Mock<IOrderSummaryService>();
+			var pdfGeneratorMock = new Mock<IOrderSummaryPdfGenerator>();
 			var localizerMock = new Mock<IStringLocalizer<OrderController>>();
 			localizerMock
 				.Setup(x => x[It.IsAny<string>()])
@@ -1030,14 +1033,16 @@ namespace VaultShop.Web.Tests
 				paymentStatusMock.Object,
 				environmentMock.Object,
 				configuration,
-				emailServiceMock.Object)
+				emailServiceMock.Object,
+				orderSummaryServiceMock.Object,
+				pdfGeneratorMock.Object)
 			{
 				OrderVM = new OrderVM { OrderHeader = new OrderHeader { Id = orderHeader?.Id ?? 42 } },
 				ControllerContext = new ControllerContext { HttpContext = httpContext },
 				TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>())
 			};
 
-			return new TestController(controller, paymentStatusMock, paymentSessionMock, mercadoPagoPaymentSessionMock, paymentRefundMock, mercadoPagoPaymentRefundMock, unitOfWorkMock, orderHeaderMock, emailServiceMock);
+			return new TestController(controller, paymentStatusMock, paymentSessionMock, mercadoPagoPaymentSessionMock, paymentRefundMock, mercadoPagoPaymentRefundMock, unitOfWorkMock, orderHeaderMock, emailServiceMock, orderSummaryServiceMock, pdfGeneratorMock);
 		}
 
 		private static List<object> GetJsonOrders(IActionResult result)
@@ -1082,6 +1087,8 @@ namespace VaultShop.Web.Tests
 			return new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth"));
 		}
 
-		private sealed record TestController(OrderController Controller, Mock<IPaymentStatusService> PaymentStatusMock, Mock<IPaymentSessionService> PaymentSessionMock, Mock<IPaymentSessionService> MercadoPagoPaymentSessionMock, Mock<IPaymentRefundService> PaymentRefundMock, Mock<IPaymentRefundService> MercadoPagoPaymentRefundMock, Mock<IUnitOfWork> UnitOfWorkMock, Mock<IOrderHeaderRepository> OrderHeaderMock, Mock<ITransactionalEmailService> EmailServiceMock);
+		private sealed record TestController(OrderController Controller, Mock<IPaymentStatusService> PaymentStatusMock, Mock<IPaymentSessionService> PaymentSessionMock, Mock<IPaymentSessionService> MercadoPagoPaymentSessionMock, Mock<IPaymentRefundService> PaymentRefundMock, Mock<IPaymentRefundService> MercadoPagoPaymentRefundMock, Mock<IUnitOfWork> UnitOfWorkMock, Mock<IOrderHeaderRepository> OrderHeaderMock, Mock<ITransactionalEmailService> EmailServiceMock, Mock<IOrderSummaryService> OrderSummaryServiceMock, Mock<IOrderSummaryPdfGenerator> PdfGeneratorMock);
 	}
 }
+
+

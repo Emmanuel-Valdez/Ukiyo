@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="OrderSummaryTitle" xml:space="preserve">
+    <value>Resumen de Pedido</value>
+  </data>
+  <data name="OrderDateLabel" xml:space="preserve">
+    <value>Fecha del Pedido</value>
+  </data>
+  <data name="OrderStatusLabel" xml:space="preserve">
+    <value>Estado del Pedido</value>
+  </data>
+  <data name="PaymentStatusLabel" xml:space="preserve">
+    <value>Estado del Pago</value>
+  </data>
+  <data name="PaymentMethodLabel" xml:space="preserve">
+    <value>Método de Pago</value>
+  </data>
+  <data name="PaymentDueDateLabel" xml:space="preserve">
+    <value>Fecha de Vencimiento</value>
+  </data>
+  <data name="CustomerInfoTitle" xml:space="preserve">
+    <value>Cliente</value>
+  </data>
+  <data name="RazonSocialLabel" xml:space="preserve">
+    <value>Razón Social</value>
+  </data>
+  <data name="DomicilioFiscalLabel" xml:space="preserve">
+    <value>Domicilio Fiscal</value>
+  </data>
+  <data name="CuitLabel" xml:space="preserve">
+    <value>CUIT</value>
+  </data>
+  <data name="ShippingInfoTitle" xml:space="preserve">
+    <value>Dirección de Envío</value>
+  </data>
+  <data name="ProductHeader" xml:space="preserve">
+    <value>Producto</value>
+  </data>
+  <data name="UnitPriceHeader" xml:space="preserve">
+    <value>Precio Unitario</value>
+  </data>
+  <data name="QuantityHeader" xml:space="preserve">
+    <value>Cant.</value>
+  </data>
+  <data name="LineTotalHeader" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="TotalLabel" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="NonFiscalLegend" xml:space="preserve">
+    <value>DOCUMENTO NO VÁLIDO COMO FACTURA NI COMO COMPROBANTE FISCAL.</value>
+  </data>
+  <data name="Pending" xml:space="preserve">
+    <value>Pendiente</value>
+  </data>
+  <data name="Approved" xml:space="preserve">
+    <value>Aprobado</value>
+  </data>
+  <data name="ApprovedForDelayedPayment" xml:space="preserve">
+    <value>Aprobado para Pago Diferido</value>
+  </data>
+  <data name="Rejected" xml:space="preserve">
+    <value>Rechazado</value>
+  </data>
+  <data name="Refunded" xml:space="preserve">
+    <value>Reembolsado</value>
+  </data>
+  <data name="Cancelled" xml:space="preserve">
+    <value>Cancelado</value>
+  </data>
+  <data name="Shipped" xml:space="preserve">
+    <value>Enviado</value>
+  </data>
+  <data name="Stripe" xml:space="preserve">
+    <value>Stripe</value>
+  </data>
+  <data name="BankTransfer" xml:space="preserve">
+    <value>Transferencia Bancaria</value>
+  </data>
+  <data name="MercadoPago" xml:space="preserve">
+    <value>Mercado Pago</value>
+  </data>
+  <data name="Unspecified" xml:space="preserve">
+    <value>No especificado</value>
+  </data>
+</root>

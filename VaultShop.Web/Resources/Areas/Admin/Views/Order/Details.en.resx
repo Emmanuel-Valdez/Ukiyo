@@ -322,7 +322,7 @@
     <value>Choose bank transfer?</value>
   </data>
   <data name="CompanyBankTransferConfirmText" xml:space="preserve">
-    <value>This will keep the order as delayed payment and show the bank transfer details. You will not be redirected to Stripe.</value>
+    <value>This will keep the order as delayed payment and show the bank transfer details.</value>
   </data>
   <data name="CompanyBankTransferConfirmButton" xml:space="preserve">
     <value>Yes, choose bank transfer</value>
@@ -330,4 +330,10 @@
   <data name="ZipCode" xml:space="preserve">
     <value>Zip Code</value>
   </data>
-</root>
+  <data name="ViewOrderSummary" xml:space="preserve">
+    <value>View Order Summary</value>
+  </data>
+  <data name="DownloadSummaryPdf" xml:space="preserve">
+    <value>Download Summary PDF</value>
+  </data></root>
+

@@ -60,5 +60,12 @@ namespace VaultShop.Models
 		[Display(Name = "Phone Number")]
 		public string PhoneNumber { get; set; } = string.Empty;
 
+		[Display(Name = "Razón social")]
+		public string? RazonSocialSnapshot { get; set; }
+		[Display(Name = "Domicilio fiscal")]
+		public string? DomicilioFiscalSnapshot { get; set; }
+		[Display(Name = "CUIT")]
+		public string? CuitSnapshot { get; set; }
+
 	}
 }

@@ -31,9 +31,13 @@ using VaultShop.Web.Services.Payments;
 using VaultShop.Web.Services.Pagination;
 using VaultShop.Web.Services.Pricing;
 using VaultShop.Web.Services.RichText;
+using VaultShop.Web.Services.Billing;
 
 
 DotNetEnv.Env.Load();
+
+// Configure QuestPDF community license before any document generation.
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -221,6 +225,8 @@ builder.Services.AddScoped<IPaymentStatusService, PaymentStatusService>();
 builder.Services.AddScoped<IPricingCalculatorService, PricingCalculatorService>();
 builder.Services.AddScoped<IRichTextSanitizer, RichTextSanitizer>();
 builder.Services.AddScoped<ITransactionalEmailService, TransactionalEmailService>();
+builder.Services.AddScoped<IOrderSummaryService, OrderSummaryService>();
+builder.Services.AddScoped<IOrderSummaryPdfGenerator, OrderSummaryPdfGenerator>();
 
 var app = builder.Build();
 

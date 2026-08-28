@@ -168,4 +168,8 @@
   <data name="ViewMyOrder" xml:space="preserve">
     <value>View my order</value>
   </data>
-</root>
+  <data name="ViewOrderSummary" xml:space="preserve">
+    <value>View Order Summary</value>
+  </data></root>
+
+

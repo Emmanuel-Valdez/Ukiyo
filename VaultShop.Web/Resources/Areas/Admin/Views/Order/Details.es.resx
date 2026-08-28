@@ -322,7 +322,7 @@
     <value>¿Elegir transferencia bancaria?</value>
   </data>
   <data name="CompanyBankTransferConfirmText" xml:space="preserve">
-    <value>Esto mantendrá la orden como pago diferido y mostrará los datos para transferir. No se abrirá Stripe.</value>
+    <value>Esto mantendrá la orden como pago diferido y mostrará los datos para transferir.</value>
   </data>
   <data name="CompanyBankTransferConfirmButton" xml:space="preserve">
     <value>Sí, elegir transferencia</value>
@@ -330,4 +330,10 @@
   <data name="ZipCode" xml:space="preserve">
     <value>Código Postal</value>
   </data>
-</root>
+  <data name="ViewOrderSummary" xml:space="preserve">
+    <value>Ver Resumen del Pedido</value>
+  </data>
+  <data name="DownloadSummaryPdf" xml:space="preserve">
+    <value>Descargar Resumen PDF</value>
+  </data></root>
+
