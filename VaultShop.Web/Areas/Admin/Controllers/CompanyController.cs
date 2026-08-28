@@ -45,9 +45,8 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 		[HttpPost]
 		public IActionResult Upsert(Company obj)
 		{
-
 			if (!ModelState.IsValid)
-			 return View(obj); 
+			 return View(obj);
 
 			if (obj.Id == 0)
 			{
@@ -63,12 +62,15 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 					return NotFound();
 				}
 
-				companyFromDb.Name = obj.Name;
-				companyFromDb.StreetAddress = obj.StreetAddress;
-				companyFromDb.City = obj.City;
-				companyFromDb.State = obj.State;
-				companyFromDb.PostalCode = obj.PostalCode;
-				companyFromDb.PhoneNumber = obj.PhoneNumber;
+			companyFromDb.Name = obj.Name;
+			companyFromDb.StreetAddress = obj.StreetAddress;
+			companyFromDb.City = obj.City;
+			companyFromDb.State = obj.State;
+			companyFromDb.PostalCode = obj.PostalCode;
+			companyFromDb.PhoneNumber = obj.PhoneNumber;
+			companyFromDb.RazonSocial = obj.RazonSocial;
+			companyFromDb.DomicilioFiscal = obj.DomicilioFiscal;
+			companyFromDb.Cuit = obj.Cuit;
 				_unitOfWork.Company.Update(companyFromDb);
 				TempData["success"] = _localizer["CompanyEditedSuccesfully"].Value;
 			}

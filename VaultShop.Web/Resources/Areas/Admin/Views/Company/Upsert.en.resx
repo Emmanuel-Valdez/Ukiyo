@@ -129,6 +129,15 @@
   <data name="Create" xml:space="preserve">
     <value>Create</value>
   </data>
+  <data name="Cuit" xml:space="preserve">
+    <value>CUIT</value>
+  </data>
+  <data name="DomicilioFiscal" xml:space="preserve">
+    <value>Tax Address</value>
+  </data>
+  <data name="FiscalData" xml:space="preserve">
+    <value>Fiscal Data</value>
+  </data>
   <data name="Name" xml:space="preserve">
     <value>Name</value>
   </data>
@@ -137,6 +146,9 @@
   </data>
   <data name="PostalCode" xml:space="preserve">
     <value>Postal Code</value>
+  </data>
+  <data name="RazonSocial" xml:space="preserve">
+    <value>Legal Name</value>
   </data>
   <data name="State" xml:space="preserve">
     <value>State</value>

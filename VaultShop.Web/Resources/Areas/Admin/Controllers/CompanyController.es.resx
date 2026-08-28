@@ -129,4 +129,10 @@
   <data name="ErrorWhileDeleting" xml:space="preserve">
     <value>Error al Borrar</value>
   </data>
+  <data name="RazonSocialRequired" xml:space="preserve">
+    <value>La razón social es obligatoria.</value>
+  </data>
+  <data name="DomicilioFiscalRequired" xml:space="preserve">
+    <value>El domicilio fiscal es obligatorio.</value>
+  </data>
 </root>

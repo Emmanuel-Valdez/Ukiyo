@@ -27,32 +27,59 @@
 						<input asp-for="StreetAddress" class="form-control" placeholder="StreetAddress" />
 						<label asp-for="StreetAddress" class="ms-2 text-muted">@Localizer["StreetAddress"]</label>
 					</div>					
+					<span asp-validation-for="StreetAddress" class="text-danger"></span>
 				</div>
 				<div class="mb-3">
 					<div class="form-floating mb-3 col-md-12 shadow">
 						<input asp-for="City" class="form-control" placeholder="City" />
 						<label asp-for="City" class="ms-2 text-muted">@Localizer["City"]</label>
 					</div>				
+					<span asp-validation-for="City" class="text-danger"></span>
 				</div>
 				<div class="mb-3">
 					<div class="form-floating mb-3 col-md-12 shadow">
 						<input asp-for="State" class="form-control" placeholder="State" />
 						<label asp-for="State" class="ms-2 text-muted">@Localizer["State"]</label>
 					</div>					
+					<span asp-validation-for="State" class="text-danger"></span>
 				</div>
 				<div class="mb-3">
 					<div class="form-floating mb-3 col-md-12 shadow">
 						<input asp-for="PostalCode" class="form-control" placeholder="PostalCode" />
 						<label asp-for="PostalCode" class="ms-2 text-muted">@Localizer["PostalCode"]</label>
 					</div>
+					<span asp-validation-for="PostalCode" class="text-danger"></span>
 				</div>
-				<div class="mb-3">
-					<div class="form-floating mb-3 col-md-12 shadow">
-						<input asp-for="PhoneNumber" class="form-control" placeholder="PhoneNumber" />
-						<label asp-for="PhoneNumber" class="ms-2 text-muted">@Localizer["PhoneNumber"]</label>
-					</div>
+			<div class="mb-3">
+				<div class="form-floating mb-3 col-md-12 shadow">
+					<input asp-for="PhoneNumber" class="form-control" placeholder="PhoneNumber" />
+					<label asp-for="PhoneNumber" class="ms-2 text-muted">@Localizer["PhoneNumber"]</label>
 				</div>
-				<div class="row mt-3">
+				<span asp-validation-for="PhoneNumber" class="text-danger"></span>
+			</div>
+			<hr />
+			<h5 class="text-muted mb-3">@Localizer["FiscalData"]</h5>
+			<div class="mb-3">
+				<div class="form-floating mb-3 col-md-12 shadow">
+					<input asp-for="RazonSocial" class="form-control" placeholder="RazonSocial" />
+					<label asp-for="RazonSocial" class="ms-2 text-muted">@Localizer["RazonSocial"]</label>
+				</div>
+				<span asp-validation-for="RazonSocial" class="text-danger"></span>
+			</div>
+			<div class="mb-3">
+				<div class="form-floating mb-3 col-md-12 shadow">
+					<input asp-for="DomicilioFiscal" class="form-control" placeholder="DomicilioFiscal" />
+					<label asp-for="DomicilioFiscal" class="ms-2 text-muted">@Localizer["DomicilioFiscal"]</label>
+				</div>
+				<span asp-validation-for="DomicilioFiscal" class="text-danger"></span>
+			</div>
+			<div class="mb-3">
+				<div class="form-floating mb-3 col-md-12 shadow">
+					<input asp-for="Cuit" class="form-control" placeholder="Cuit" />
+					<label asp-for="Cuit" class="ms-2 text-muted">@Localizer["Cuit"]</label>
+				</div>
+			</div>
+			<div class="row mt-3">
 					<div class="col-6 col-md-3">
 						@if (Model.Id != 0)
 						{

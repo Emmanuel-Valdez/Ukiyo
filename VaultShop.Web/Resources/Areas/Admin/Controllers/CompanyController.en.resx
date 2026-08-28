@@ -129,4 +129,10 @@
   <data name="ErrorWhileDeleting" xml:space="preserve">
     <value>Error while deleting</value>
   </data>
+  <data name="RazonSocialRequired" xml:space="preserve">
+    <value>Legal name is required.</value>
+  </data>
+  <data name="DomicilioFiscalRequired" xml:space="preserve">
+    <value>Tax address is required.</value>
+  </data>
 </root>
