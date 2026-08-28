@@ -101,7 +101,7 @@ namespace VaultShop.Web.Tests
             }
 
             var db = services.GetRequiredService<ApplicationDbContext>();
-            var company = new Company { Name = "Test Company", IsDeleted = false };
+            var company = new Company { Name = "Test Company", IsDeleted = false, StreetAddress = "Av. Test 123", City = "Buenos Aires", State = "Buenos Aires", PostalCode = "1000", PhoneNumber = "011-1234-5678", RazonSocial = "Test Company S.A.", DomicilioFiscal = "Av. Test 123" };
             db.Companies.Add(company);
             await db.SaveChangesAsync();
 

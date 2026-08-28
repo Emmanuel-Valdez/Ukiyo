@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using VaultShop.DataAccess.Data;
@@ -11,9 +12,11 @@ using VaultShop.DataAccess.Data;
 namespace VaultShop.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260828174946_AddCompanyFiscalFields")]
+    partial class AddCompanyFiscalFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -255,7 +258,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Fabrics", (string)null);
+                    b.ToTable("Fabrics");
                 });
 
             modelBuilder.Entity("VaultShop.Models.CalculatorModels.FabricByProduct", b =>
@@ -274,7 +277,7 @@ namespace VaultShop.DataAccess.Migrations
                     b.HasIndex("ProductId")
                         .IsUnique();
 
-                    b.ToTable("FabricsByProduct", (string)null);
+                    b.ToTable("FabricsByProduct");
                 });
 
             modelBuilder.Entity("VaultShop.Models.CalculatorModels.FixedCost", b =>
@@ -297,7 +300,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FixedCosts", (string)null);
+                    b.ToTable("FixedCosts");
                 });
 
             modelBuilder.Entity("VaultShop.Models.CalculatorModels.GarmentHardware", b =>
@@ -328,7 +331,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GarmentHardwares", (string)null);
+                    b.ToTable("GarmentHardwares");
                 });
 
             modelBuilder.Entity("VaultShop.Models.CalculatorModels.GarmentHardwareByProduct", b =>
@@ -347,7 +350,7 @@ namespace VaultShop.DataAccess.Migrations
                     b.HasIndex("ProductId")
                         .IsUnique();
 
-                    b.ToTable("GarmentHardwaresByProduct", (string)null);
+                    b.ToTable("GarmentHardwaresByProduct");
                 });
 
             modelBuilder.Entity("VaultShop.Models.CalculatorModels.Packaging", b =>
@@ -378,7 +381,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Packagings", (string)null);
+                    b.ToTable("Packagings");
                 });
 
             modelBuilder.Entity("VaultShop.Models.CalculatorModels.PackagingByCategory", b =>
@@ -397,7 +400,7 @@ namespace VaultShop.DataAccess.Migrations
                     b.HasIndex("CategoryId")
                         .IsUnique();
 
-                    b.ToTable("PackagingsByCategory", (string)null);
+                    b.ToTable("PackagingsByCategory");
                 });
 
             modelBuilder.Entity("VaultShop.Models.CalculatorModels.PercentageCost", b =>
@@ -420,7 +423,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PercentageCosts", (string)null);
+                    b.ToTable("PercentageCosts");
                 });
 
             modelBuilder.Entity("VaultShop.Models.CalculatorModels.PercentageCostWholesale", b =>
@@ -462,7 +465,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PercentageProfits", (string)null);
+                    b.ToTable("PercentageProfits");
                 });
 
             modelBuilder.Entity("VaultShop.Models.CalculatorModels.UnitFabricByProduct", b =>
@@ -496,7 +499,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("UnitsFabricByProduct", (string)null);
+                    b.ToTable("UnitsFabricByProduct");
                 });
 
             modelBuilder.Entity("VaultShop.Models.CalculatorModels.UnitGarmentHardwareByProduct", b =>
@@ -530,7 +533,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("UnitsGarmentHardwareByProduct", (string)null);
+                    b.ToTable("UnitsGarmentHardwareByProduct");
                 });
 
             modelBuilder.Entity("VaultShop.Models.CalculatorModels.UnitPackagingByCategory", b =>
@@ -564,7 +567,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasIndex("PackagingId");
 
-                    b.ToTable("UnitsPackagingByCategory", (string)null);
+                    b.ToTable("UnitsPackagingByCategory");
                 });
 
             modelBuilder.Entity("VaultShop.Models.Category", b =>
@@ -590,7 +593,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("VaultShop.Models.Company", b =>
@@ -641,7 +644,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Companies", (string)null);
+                    b.ToTable("Companies");
                 });
 
             modelBuilder.Entity("VaultShop.Models.FavoriteProduct", b =>
@@ -665,7 +668,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("FavoriteProducts", (string)null);
+                    b.ToTable("FavoriteProducts");
                 });
 
             modelBuilder.Entity("VaultShop.Models.OrderDetail", b =>
@@ -694,7 +697,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("OrderDetails", (string)null);
+                    b.ToTable("OrderDetails");
                 });
 
             modelBuilder.Entity("VaultShop.Models.OrderHeader", b =>
@@ -802,7 +805,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasIndex("CompanyId");
 
-                    b.ToTable("OrderHeaders", (string)null);
+                    b.ToTable("OrderHeaders");
                 });
 
             modelBuilder.Entity("VaultShop.Models.Product", b =>
@@ -849,7 +852,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("VaultShop.Models.ProductImage", b =>
@@ -899,7 +902,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImages", (string)null);
+                    b.ToTable("ProductImages");
                 });
 
             modelBuilder.Entity("VaultShop.Models.ShoppingCart", b =>
@@ -926,7 +929,7 @@ namespace VaultShop.DataAccess.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ShoppingCarts", (string)null);
+                    b.ToTable("ShoppingCarts");
                 });
 
             modelBuilder.Entity("VaultShop.Models.ApplicationUser", b =>
