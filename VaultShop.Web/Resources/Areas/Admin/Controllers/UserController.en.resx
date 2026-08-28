@@ -123,4 +123,7 @@
   <data name="OperationSuccessful" xml:space="preserve">
     <value>Operation Successful</value>
   </data>
+  <data name="CompanyIdRequired" xml:space="preserve">
+    <value>Please select a company for this role.</value>
+  </data>
 </root>

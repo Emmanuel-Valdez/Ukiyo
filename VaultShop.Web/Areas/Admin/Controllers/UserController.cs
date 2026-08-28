@@ -79,16 +79,24 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 				return NotFound();
 			}
 
-			if (roleManagmentVM.ApplicationUser.Role != SD.Role_Company)
+		if (roleManagmentVM.ApplicationUser.Role != SD.Role_Company)
+		{
+			roleManagmentVM.ApplicationUser.CompanyId = null;
+		}
+		else if (!roleManagmentVM.ApplicationUser.CompanyId.HasValue
+				 || !_unitOfWork.Company.GetAll(u => u.IsDeleted == false && u.Id == roleManagmentVM.ApplicationUser.CompanyId.Value).Any())
+		{
+			ModelState.AddModelError("ApplicationUser.CompanyId", _localizer["CompanyIdRequired"].Value);
+			roleManagmentVM.RoleList = GetAssignableRoleList();
+			roleManagmentVM.CompanyList = _unitOfWork.Company.GetAll(u => u.IsDeleted == false).Select(u => new SelectListItem
 			{
-				roleManagmentVM.ApplicationUser.CompanyId = null;
-			}
-			else if (!_unitOfWork.Company.GetAll(u => u.IsDeleted == false && u.Id == roleManagmentVM.ApplicationUser.CompanyId).Any())
-			{
-				return NotFound();
-			}
+				Text = u.Name,
+				Value = u.Id.ToString()
+			});
+			return View(roleManagmentVM);
+		}
 
-			if (!(roleManagmentVM.ApplicationUser.Role == oldRole))
+		if (!(roleManagmentVM.ApplicationUser.Role == oldRole))
 			{
 				if (roleManagmentVM.ApplicationUser.Role == SD.Role_Company)
 				{
