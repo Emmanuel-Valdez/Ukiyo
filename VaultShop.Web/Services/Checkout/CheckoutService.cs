@@ -161,6 +161,9 @@ namespace VaultShop.Web.Services.Checkout
 			{
 				shoppingCartVM.OrderHeader.PaymentStatus = SD.PaymentStatusPending;
 				shoppingCartVM.OrderHeader.OrderStatus = SD.StatusPending;
+				shoppingCartVM.OrderHeader.RazonSocialSnapshot = null;
+				shoppingCartVM.OrderHeader.DomicilioFiscalSnapshot = null;
+				shoppingCartVM.OrderHeader.CuitSnapshot = null;
 				// PaymentMethod is already validated by the caller against enabled methods; keep it as posted.
 			}
 			else

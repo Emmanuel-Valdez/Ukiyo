@@ -103,6 +103,35 @@ namespace VaultShop.Web.Tests
 			Assert.Equal("Textiles SA SRL", summary.RazonSocial);
 		}
 
+		[Fact]
+		public void CreateOrder_NonCompanyOrder_FiscalSnapshotFieldsAreNull()
+		{
+			using var connection = CreateOpenConnection();
+			var options = CreateOptions(connection);
+			EnsureDatabaseCreated(options);
+			SeedCheckoutCart(options, "user-1", productId: 10, count: 2);
+
+			using (var context = new ApplicationDbContext(options))
+			{
+				var service = CreateService(context);
+
+				var postedHeader = CreatePostedOrderHeader();
+				postedHeader.RazonSocialSnapshot = "HACKED Razon";
+				postedHeader.DomicilioFiscalSnapshot = "HACKED Domicilio";
+				postedHeader.CuitSnapshot = "99-99999999-9";
+
+				var result = service.CreateOrder("user-1", postedHeader, useWholesalePrice: false);
+
+				Assert.True(result.OrderId > 0);
+			}
+
+			using var verifyContext = new ApplicationDbContext(options);
+			var order = verifyContext.OrderHeaders.AsNoTracking().Single();
+			Assert.Null(order.RazonSocialSnapshot);
+			Assert.Null(order.DomicilioFiscalSnapshot);
+			Assert.Null(order.CuitSnapshot);
+		}
+
 		private static CheckoutService CreateService(ApplicationDbContext context)
 		{
 			return new CheckoutService(new UnitOfWork(context), NullLogger<CheckoutService>.Instance);
