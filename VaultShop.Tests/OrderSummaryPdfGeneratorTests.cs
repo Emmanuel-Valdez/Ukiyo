@@ -31,6 +31,71 @@ namespace VaultShop.Web.Tests
 			Assert.Equal((byte)'F', pdf[3]);
 		}
 
+		[Fact]
+		public void Generate_WithCompanyFiscalFieldsAndDueDate_ProducesPdf()
+		{
+			var generator = CreateGenerator();
+			var summary = CreateFiscalSummary();
+
+			var pdf = generator.Generate(summary);
+
+			Assert.NotNull(pdf);
+			Assert.Equal((byte)'%', pdf[0]);
+			Assert.True(pdf.Length > 100);
+		}
+
+		[Fact]
+		public void Generate_WithoutCompany_ProducesPdf()
+		{
+			var generator = CreateGenerator();
+			var summary = CreateSampleSummary();
+
+			var pdf = generator.Generate(summary);
+
+			Assert.NotNull(pdf);
+			Assert.Equal((byte)'%', pdf[0]);
+			Assert.True(pdf.Length > 100);
+		}
+
+		private static OrderSummaryPdfGenerator CreateGenerator()
+		{
+			var localizerMock = new Mock<IStringLocalizer<OrderSummaryPdfGenerator>>();
+			localizerMock
+				.Setup(x => x[It.IsAny<string>()])
+				.Returns((string name) => new LocalizedString(name, name));
+			var branding = Options.Create(new BrandingOptions { PublicName = "TestStore" });
+			return new OrderSummaryPdfGenerator(localizerMock.Object, branding);
+		}
+
+		private static OrderSummaryViewModel CreateFiscalSummary()
+		{
+			return new OrderSummaryViewModel
+			{
+				OrderId = 99,
+				OrderDate = new DateTime(2026, 8, 21, 14, 0, 0, DateTimeKind.Utc),
+				OrderStatus = "Approved",
+				PaymentStatus = "DelayedPayment",
+				PaymentMethod = "BankTransfer",
+				PaymentDueDate = DateOnly.FromDateTime(new DateTime(2026, 9, 1)),
+				CustomerName = "Maria Lopez",
+				CompanyName = "Textiles SA",
+				RazonSocial = "Textiles SA SRL",
+				DomicilioFiscal = "Av. Corrientes 1234, CABA",
+				Cuit = "30-71234567-9",
+				ShippingName = "Maria Lopez",
+				ShippingStreetAddress = "Av. Corrientes 1234",
+				ShippingCity = "CABA",
+				ShippingState = "CABA",
+				ShippingPostalCode = "1043",
+				ShippingPhoneNumber = "+54 11 8765-4321",
+				Items =
+				[
+					new() { ProductName = "Tela Algodón", UnitPrice = 2500m, Quantity = 2 }
+				],
+				OrderTotal = 5000m
+			};
+		}
+
 		private static OrderSummaryViewModel CreateSampleSummary()
 		{
 			return new OrderSummaryViewModel

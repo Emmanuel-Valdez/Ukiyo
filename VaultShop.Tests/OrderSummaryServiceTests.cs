@@ -93,6 +93,22 @@ namespace VaultShop.Web.Tests
 			Assert.NotNull(result);
 		}
 
+		[Fact]
+		public void GetSummary_TotalPreserved_DoesNotRecomputeFromItems()
+		{
+			var order = CreateCustomerOrder();
+			order.OrderTotal = 9999m; // header total intentionally differs from sum of item LineTotals
+			var details = CreateCustomerOrderDetails();
+			var unitOfWork = CreateUnitOfWork(order, details, [CreateUser("user-1")]);
+			var service = new OrderSummaryService(unitOfWork.Object, new OrderAccessPolicy(unitOfWork.Object));
+			var principal = CreatePrincipal("user-1");
+
+			var result = service.GetSummary(order.Id, principal);
+
+			Assert.NotNull(result);
+			Assert.Equal(9999m, result.OrderTotal);
+		}
+
 		private static OrderHeader CreateCustomerOrder()
 		{
 			return new OrderHeader

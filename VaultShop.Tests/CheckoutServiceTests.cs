@@ -96,6 +96,32 @@ namespace VaultShop.Web.Tests
 		}
 
 		[Fact]
+		public void CreateOrder_CompanyUser_SnapshotsFiscalFields()
+		{
+			var carts = new[]
+			{
+				CreateCart("user-1", productId: 10, count: 1, retailPrice: 100m, wholesalePrice: 70m)
+			};
+			var company = new Company
+			{
+				Id = 7,
+				Name = "Textiles SA",
+				RazonSocial = "Textiles SA SRL",
+				DomicilioFiscal = "Av. Corrientes 1234, CABA",
+				Cuit = "30-71234567-9"
+			};
+			var unitOfWork = CreateUnitOfWork(carts, [CreateUser("user-1", companyId: 7)], [company]);
+			var service = CreateService(unitOfWork.Mock.Object);
+
+			var result = service.CreateOrder("user-1", new OrderHeader { PaymentMethod = SD.PaymentMethodBankTransfer }, useWholesalePrice: false);
+
+			var orderHeader = Assert.Single(unitOfWork.AddedOrderHeaders);
+			Assert.Equal("Textiles SA SRL", orderHeader.RazonSocialSnapshot);
+			Assert.Equal("Av. Corrientes 1234, CABA", orderHeader.DomicilioFiscalSnapshot);
+			Assert.Equal("30-71234567-9", orderHeader.CuitSnapshot);
+		}
+
+		[Fact]
 		public void CreateOrder_OrderDetailCreationFails_RethrowsException()
 		{
 			var carts = new[]
