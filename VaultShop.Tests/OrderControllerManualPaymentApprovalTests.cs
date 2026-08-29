@@ -18,6 +18,7 @@ using VaultShop.Utility;
 using VaultShop.Web.Areas.Admin.Controllers;
 using VaultShop.Web.Services.Email;
 using VaultShop.Web.Services.Payments;
+using VaultShop.Web.Services;
 using VaultShop.Web.Services.Billing;
 
 namespace VaultShop.Web.Tests
@@ -1035,7 +1036,8 @@ namespace VaultShop.Web.Tests
 				configuration,
 				emailServiceMock.Object,
 				orderSummaryServiceMock.Object,
-				pdfGeneratorMock.Object)
+				pdfGeneratorMock.Object,
+				new OrderAccessPolicy(unitOfWorkMock.Object))
 			{
 				OrderVM = new OrderVM { OrderHeader = new OrderHeader { Id = orderHeader?.Id ?? 42 } },
 				ControllerContext = new ControllerContext { HttpContext = httpContext },

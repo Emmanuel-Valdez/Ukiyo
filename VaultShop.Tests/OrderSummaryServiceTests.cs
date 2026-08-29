@@ -4,6 +4,7 @@ using Moq;
 using VaultShop.DataAccess.Repository.IRepository;
 using VaultShop.Models;
 using VaultShop.Utility;
+using VaultShop.Web.Services;
 using VaultShop.Web.Services.Billing;
 
 namespace VaultShop.Web.Tests
@@ -16,7 +17,7 @@ namespace VaultShop.Web.Tests
 			var order = CreateCustomerOrder();
 			var details = CreateCustomerOrderDetails();
 			var unitOfWork = CreateUnitOfWork(order, details, [CreateUser("user-1")]);
-			var service = new OrderSummaryService(unitOfWork.Object);
+			var service = new OrderSummaryService(unitOfWork.Object, new OrderAccessPolicy(unitOfWork.Object));
 			var principal = CreatePrincipal("user-1");
 
 			var result = service.GetSummary(order.Id, principal);
@@ -52,7 +53,7 @@ namespace VaultShop.Web.Tests
 			var order = CreateCompanyOrder();
 			var details = CreateCompanyOrderDetails();
 			var unitOfWork = CreateUnitOfWork(order, details, [CreateUser("user-1", companyId: 7)], [CreateCompany(7)]);
-			var service = new OrderSummaryService(unitOfWork.Object);
+			var service = new OrderSummaryService(unitOfWork.Object, new OrderAccessPolicy(unitOfWork.Object));
 			var principal = CreatePrincipal("user-1");
 
 			var result = service.GetSummary(order.Id, principal);
@@ -70,7 +71,7 @@ namespace VaultShop.Web.Tests
 			var order = CreateCustomerOrder();
 			var details = CreateCustomerOrderDetails();
 			var unitOfWork = CreateUnitOfWork(order, details, [CreateUser("user-1")]);
-			var service = new OrderSummaryService(unitOfWork.Object);
+			var service = new OrderSummaryService(unitOfWork.Object, new OrderAccessPolicy(unitOfWork.Object));
 			var principal = CreatePrincipal("other-user");
 
 			var result = service.GetSummary(order.Id, principal);
@@ -84,7 +85,7 @@ namespace VaultShop.Web.Tests
 			var order = CreateCustomerOrder();
 			var details = CreateCustomerOrderDetails();
 			var unitOfWork = CreateUnitOfWork(order, details, [CreateUser("user-1")]);
-			var service = new OrderSummaryService(unitOfWork.Object);
+			var service = new OrderSummaryService(unitOfWork.Object, new OrderAccessPolicy(unitOfWork.Object));
 			var principal = CreateAdminPrincipal();
 
 			var result = service.GetSummary(order.Id, principal);

@@ -31,6 +31,7 @@ using VaultShop.Web.Services.Payments;
 using VaultShop.Web.Services.Pagination;
 using VaultShop.Web.Services.Pricing;
 using VaultShop.Web.Services.RichText;
+using VaultShop.Web.Services;
 using VaultShop.Web.Services.Billing;
 
 
@@ -227,6 +228,7 @@ builder.Services.AddScoped<IRichTextSanitizer, RichTextSanitizer>();
 builder.Services.AddScoped<ITransactionalEmailService, TransactionalEmailService>();
 builder.Services.AddScoped<IOrderSummaryService, OrderSummaryService>();
 builder.Services.AddScoped<IOrderSummaryPdfGenerator, OrderSummaryPdfGenerator>();
+builder.Services.AddScoped<OrderAccessPolicy>();
 
 var app = builder.Build();
 

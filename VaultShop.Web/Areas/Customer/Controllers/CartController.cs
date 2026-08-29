@@ -10,6 +10,7 @@ using VaultShop.DataAccess.Repository.IRepository;
 using VaultShop.Models;
 using VaultShop.Models.ViewModels;
 using VaultShop.Utility;
+using VaultShop.Web.Services;
 using VaultShop.Web.Services.Checkout;
 using VaultShop.Web.Services.Email;
 using VaultShop.Web.Services.Payments;
@@ -31,9 +32,10 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 		private readonly IPaymentStatusService _paymentStatusService;
 		private readonly ITransactionalEmailService _emailService;
 		private readonly IConfiguration _configuration;
+		private readonly OrderAccessPolicy _orderAccessPolicy;
 		public CartController(IUnitOfWork unitOfWork,IStringLocalizer<CartController> localizer, SignInManager<ApplicationUser> signInManager,
 			ILogger<CartController> logger, ICheckoutService checkoutService, IServiceProvider paymentSessionServiceProvider,
-			IPaymentStatusService paymentStatusService, ITransactionalEmailService emailService, IConfiguration configuration)
+			IPaymentStatusService paymentStatusService, ITransactionalEmailService emailService, IConfiguration configuration, OrderAccessPolicy orderAccessPolicy)
 		{
 			_localizer = localizer;
 			_unitOfWork = unitOfWork;
@@ -44,6 +46,7 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 			_paymentStatusService = paymentStatusService;
 			_emailService = emailService;
 			_configuration = configuration;
+			_orderAccessPolicy = orderAccessPolicy;
 		}
 		public IActionResult Index()
 		{
@@ -227,7 +230,7 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 			{
 				return NotFound();
 			}
-			if (!UserCanAccessOrder(orderHeader))
+			if (!_orderAccessPolicy.CanAccess(orderHeader, User))
 			{
 				return NotFound();
 			}
@@ -320,28 +323,6 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 			}
 
 			return _paymentSessionServiceProvider.GetRequiredKeyedService<IPaymentSessionService>(paymentMethod);
-		}
-
-		private bool UserCanAccessOrder(OrderHeader orderHeader)
-		{
-			if (User.IsInRole(SD.Role_Admin) || User.IsInRole(SD.Role_Employee))
-			{
-				return true;
-			}
-
-			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			if (string.IsNullOrEmpty(userId))
-			{
-				return false;
-			}
-
-			if (orderHeader.ApplicationUserId == userId && orderHeader.CompanyId.GetValueOrDefault() == 0)
-			{
-				return true;
-			}
-
-			var currentUser = _unitOfWork.ApplicationUser.Get(u => u.Id == userId);
-			return currentUser?.CompanyId.GetValueOrDefault() > 0 && orderHeader.CompanyId == currentUser.CompanyId;
 		}
 
 		[HttpPost]

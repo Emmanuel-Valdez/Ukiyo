@@ -13,6 +13,7 @@ using VaultShop.Models.ViewModels;
 using VaultShop.Utility;
 using VaultShop.Web.Services.Email;
 using VaultShop.Web.Services.Payments;
+using VaultShop.Web.Services;
 using VaultShop.Web.Services.Billing;
 
 namespace VaultShop.Web.Areas.Admin.Controllers
@@ -35,11 +36,12 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 
 		private readonly IOrderSummaryService _orderSummaryService;
 		private readonly IOrderSummaryPdfGenerator _pdfGenerator;
+		private readonly OrderAccessPolicy _orderAccessPolicy;
 
 		public OrderController(IUnitOfWork unitOfWork, IStringLocalizer<OrderController> localizer, ILogger<OrderController> logger,
 			IServiceProvider paymentSessionServiceProvider, IPaymentRefundService paymentRefundService, IPaymentStatusService paymentStatusService,
 			IWebHostEnvironment environment, IConfiguration configuration, ITransactionalEmailService emailService,
-			IOrderSummaryService orderSummaryService, IOrderSummaryPdfGenerator pdfGenerator)
+			IOrderSummaryService orderSummaryService, IOrderSummaryPdfGenerator pdfGenerator, OrderAccessPolicy orderAccessPolicy)
 		{
 			_unitOfWork = unitOfWork;
 			_localizer = localizer;
@@ -52,6 +54,7 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 			_emailService = emailService;
 			_orderSummaryService = orderSummaryService;
 			_pdfGenerator = pdfGenerator;
+			_orderAccessPolicy = orderAccessPolicy;
 		}
 
 
@@ -67,7 +70,7 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 			{
 				return NotFound();
 			}
-			if (!UserCanAccessOrder(orderHeader))
+			if (!_orderAccessPolicy.CanAccess(orderHeader, User))
 			{
 				return NotFound();
 			}
@@ -260,7 +263,7 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 			{
 				return NotFound();
 			}
-			if (!UserCanAccessOrder(orderHeader))
+			if (!_orderAccessPolicy.CanAccess(orderHeader, User))
 			{
 				return NotFound();
 			}
@@ -338,7 +341,7 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 			{
 				return NotFound();
 			}
-			if (!UserCanAccessOrder(orderHeader))
+			if (!_orderAccessPolicy.CanAccess(orderHeader, User))
 			{
 				return NotFound();
 			}
@@ -416,7 +419,7 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 			{
 				return NotFound();
 			}
-			if (!UserCanAccessOrder(orderHeader))
+			if (!_orderAccessPolicy.CanAccess(orderHeader, User))
 			{
 				return NotFound();
 			}
@@ -646,32 +649,7 @@ namespace VaultShop.Web.Areas.Admin.Controllers
 		}
 		#endregion
 
-		private bool UserCanAccessOrder(OrderHeader orderHeader)
-		{
-			if (User.IsInRole(SD.Role_Admin) || User.IsInRole(SD.Role_Employee))
-			{
-				return true;
-			}
 
-			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			if (string.IsNullOrEmpty(userId))
-			{
-				return false;
-			}
-
-			if (orderHeader.ApplicationUserId == userId && orderHeader.CompanyId.GetValueOrDefault() == 0)
-			{
-				return true;
-			}
-
-			var currentUser = _unitOfWork.ApplicationUser.Get(u => u.Id == userId);
-			if (currentUser == null || currentUser.CompanyId.GetValueOrDefault() <= 0)
-			{
-				return false;
-			}
-
-			return orderHeader.CompanyId == currentUser.CompanyId;
-		}
 	}
 }
 

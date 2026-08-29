@@ -9,10 +9,12 @@ namespace VaultShop.Web.Services.Billing
 	public sealed class OrderSummaryService : IOrderSummaryService
 	{
 		private readonly IUnitOfWork _unitOfWork;
+		private readonly OrderAccessPolicy _orderAccessPolicy;
 
-		public OrderSummaryService(IUnitOfWork unitOfWork)
+		public OrderSummaryService(IUnitOfWork unitOfWork, OrderAccessPolicy orderAccessPolicy)
 		{
 			_unitOfWork = unitOfWork;
+			_orderAccessPolicy = orderAccessPolicy;
 		}
 
 		public OrderSummaryViewModel? GetSummary(int orderId, ClaimsPrincipal user)
@@ -21,7 +23,7 @@ namespace VaultShop.Web.Services.Billing
 				o => o.Id == orderId,
 				includeProperties: "ApplicationUser,Company");
 
-			if (orderHeader == null || !UserCanAccessOrder(orderHeader, user))
+			if (orderHeader == null || !_orderAccessPolicy.CanAccess(orderHeader, user))
 				return null;
 
 			var orderDetails = _unitOfWork.OrderDetail.GetAll(
@@ -65,22 +67,6 @@ namespace VaultShop.Web.Services.Billing
 
 				OrderTotal = o.OrderTotal,
 			};
-		}
-
-		private bool UserCanAccessOrder(OrderHeader orderHeader, ClaimsPrincipal user)
-		{
-			if (user.IsInRole(SD.Role_Admin) || user.IsInRole(SD.Role_Employee))
-				return true;
-
-			var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-			if (string.IsNullOrEmpty(userId))
-				return false;
-
-			if (orderHeader.ApplicationUserId == userId && orderHeader.CompanyId.GetValueOrDefault() == 0)
-				return true;
-
-			var currentUser = _unitOfWork.ApplicationUser.Get(u => u.Id == userId);
-			return currentUser?.CompanyId.GetValueOrDefault() > 0 && orderHeader.CompanyId == currentUser.CompanyId;
 		}
 	}
 }

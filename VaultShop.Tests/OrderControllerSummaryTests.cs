@@ -10,6 +10,7 @@ using VaultShop.DataAccess.Repository.IRepository;
 using VaultShop.Models.ViewModels;
 using VaultShop.Utility;
 using VaultShop.Web.Areas.Admin.Controllers;
+using VaultShop.Web.Services;
 using VaultShop.Web.Services.Billing;
 using VaultShop.Web.Services.Email;
 using VaultShop.Web.Services.Payments;
@@ -97,7 +98,8 @@ namespace VaultShop.Web.Tests
 				new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
 				Mock.Of<ITransactionalEmailService>(),
 				summaryMock.Object,
-				pdfMock.Object)
+				pdfMock.Object,
+				new OrderAccessPolicy(unitOfWorkMock.Object))
 			{
 				ControllerContext = new ControllerContext { HttpContext = httpContext },
 				TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>())
