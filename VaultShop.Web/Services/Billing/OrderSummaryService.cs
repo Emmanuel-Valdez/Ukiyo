@@ -26,9 +26,10 @@ namespace VaultShop.Web.Services.Billing
 			if (orderHeader == null || !_orderAccessPolicy.CanAccess(orderHeader, user))
 				return null;
 
-			var orderDetails = _unitOfWork.OrderDetail.GetAll(
-				d => d.OrderHeaderId == orderId,
-				includeProperties: "Product");
+		var orderDetails = _unitOfWork.OrderDetail.GetAll(
+			d => d.OrderHeaderId == orderId,
+			includeProperties: "Product")
+			.OrderBy(d => d.Id);
 
 			return MapToViewModel(orderHeader, orderDetails);
 		}
