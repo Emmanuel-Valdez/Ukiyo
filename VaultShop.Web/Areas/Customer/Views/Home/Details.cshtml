@@ -117,43 +117,46 @@
 							@Html.Raw(Model.Product.Description)
 						</div>
 
-						<div class="row g-3 align-items-end">
-							<div class="col-12 col-sm-4 product-detail__quantity">
-								<label asp-for="Count" class="form-label fw-semibold">@Localizer["Count"]</label>
-								<input asp-for="Count" type="number" value="1" class="form-control text-end product-detail__quantity-input" />
-								<span asp-validation-for="Count" class="text-danger product-detail__quantity-validation"></span>
+						<div class="product-detail__purchase">
+							<div class="product-detail__stepper" role="group" aria-label="@Localizer["Count"]">
+								<button type="button" class="product-detail__step product-detail__step--minus" data-quantity-step="-1" aria-label="@Localizer["DecreaseQuantity"]">
+									<i class="bi bi-dash-lg" aria-hidden="true"></i>
+								</button>
+								<input asp-for="Count" type="number" value="1" min="1" step="1" class="form-control product-detail__quantity-input" aria-label="@Localizer["Count"]" />
+								<button type="button" class="product-detail__step product-detail__step--plus" data-quantity-step="1" aria-label="@Localizer["IncreaseQuantity"]">
+									<i class="bi bi-plus-lg" aria-hidden="true"></i>
+								</button>
 							</div>
-							<div class="col-12 col-sm-8 product-detail__actions">
-								<div class="d-flex gap-2">
-									@if ((User.IsInRole(SD.Role_Admin) || User.IsInRole(SD.Role_Employee) || User.IsInRole(SD.Role_Company)) && Model.Product.FinalWholesalePrice == 0)
+							<div class="product-detail__actions">
+								@if ((User.IsInRole(SD.Role_Admin) || User.IsInRole(SD.Role_Employee) || User.IsInRole(SD.Role_Company)) && Model.Product.FinalWholesalePrice == 0)
+								{
+									<button class="btn btn-danger disabled bg-gradient py-2 text-uppercase fw-semibold product-detail__add-button">
+										@Localizer["TemporarilyUnavailable"]
+									</button>
+								}
+								else
+								{
+									<button type="submit" class="btn btn-primary bg-gradient py-2 text-uppercase fw-semibold product-detail__add-button">
+										@Localizer["AddToCart"]
+									</button>
+								}
+								@if (SignInManager.IsSignedIn(User))
+								{
+									@if (Model.IsFavorite == false)
 									{
-										<button class="btn btn-danger disabled bg-gradient py-2 text-uppercase fw-semibold flex-grow-1">
-											@Localizer["TemporarilyUnavailable"]
+										<button type="submit" class="btn btn-outline-primary fs-4 px-3" asp-action="Add" asp-controller="Favorite" aria-label="@Localizer["AddToFavorites"]">
+											<i class="bi bi-balloon-heart"></i>
 										</button>
 									}
 									else
 									{
-										<button type="submit" class="btn btn-primary bg-gradient py-2 text-uppercase fw-semibold flex-grow-1">
-											@Localizer["AddToCart"]
+										<button type="submit" class="btn btn-outline-primary fs-4 px-3" asp-action="RemoveFromProductDetails" asp-controller="Favorite" asp-route-favoriteId="@Model.FavoriteProductId" asp-route-productId="@Model.ProductId" aria-label="@Localizer["RemoveFromFavorites"]">
+											<i class="bi bi-balloon-heart-fill"></i>
 										</button>
 									}
-									@if (SignInManager.IsSignedIn(User))
-									{
-										@if (Model.IsFavorite == false)
-										{
-											<button type="submit" class="btn btn-outline-primary fs-4 px-3" asp-action="Add" asp-controller="Favorite" aria-label="@Localizer["AddToFavorites"]">
-												<i class="bi bi-balloon-heart"></i>
-											</button>
-										}
-										else
-										{
-											<button type="submit" class="btn btn-outline-primary fs-4 px-3" asp-action="RemoveFromProductDetails" asp-controller="Favorite" asp-route-favoriteId="@Model.FavoriteProductId" asp-route-productId="@Model.ProductId" aria-label="@Localizer["RemoveFromFavorites"]">
-												<i class="bi bi-balloon-heart-fill"></i>
-											</button>
-										}
-									}
-								</div>
+								}
 							</div>
+							<span asp-validation-for="Count" class="text-danger product-detail__quantity-validation"></span>
 						</div>
 					</section>
 				</div>
@@ -165,5 +168,27 @@
 	@{
 		<partial name="_ValidationScriptsPartial" />
 	}
+	<script>
+		(function () {
+			var stepper = document.querySelector('.product-detail__stepper');
+			if (!stepper) return;
+			var input = stepper.querySelector('.product-detail__quantity-input');
+			var minus = stepper.querySelector('[data-quantity-step="-1"]');
+			var update = function () {
+				var min = parseInt(input.min, 10) || 1;
+				minus.disabled = (parseInt(input.value, 10) || min) <= min;
+			};
+			document.addEventListener('click', function (e) {
+				var btn = e.target.closest('.product-detail__step');
+				if (!btn || !stepper.contains(btn)) return;
+				var min = parseInt(input.min, 10) || 1;
+				input.value = Math.max(min, (parseInt(input.value, 10) || min) + (parseInt(btn.dataset.quantityStep, 10) || 0));
+				update();
+				input.dispatchEvent(new Event('input', { bubbles: true }));
+			});
+			input.addEventListener('input', update);
+			update();
+		})();
+	</script>
 }
 

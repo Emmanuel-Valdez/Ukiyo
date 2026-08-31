@@ -132,6 +132,12 @@
   <data name="Count" xml:space="preserve">
     <value>Count</value>
   </data>
+  <data name="DecreaseQuantity" xml:space="preserve">
+    <value>Decrease quantity</value>
+  </data>
+  <data name="IncreaseQuantity" xml:space="preserve">
+    <value>Increase quantity</value>
+  </data>
   <data name="Price" xml:space="preserve">
     <value>Price</value>
   </data>
