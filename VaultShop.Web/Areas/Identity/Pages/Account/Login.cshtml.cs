@@ -13,12 +13,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using VaultShop.Models;
 using VaultShop.Models.Validation;
 
 namespace VaultShop.Web.Areas.Identity.Pages.Account
 {
+    [EnableRateLimiting("Login")]
     public class LoginModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> _signInManager;

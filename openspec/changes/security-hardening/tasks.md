@@ -1,10 +1,10 @@
 ## 1. Rate Limiting
 
-- [ ] 1.1 Add `RateLimiterOptions` POCO and bind to configuration section `RateLimiting` with sensible defaults (global: 100 req/1 min, login: 10 req/1 min) and verify values resolve via `IOptions<RateLimiterOptions>`
-- [ ] 1.2 Register `AddRateLimiter` in `Program.cs` with a global fixed-window policy and a stricter `Login` policy, and verify the app starts without exception
-- [ ] 1.3 Apply `[EnableRateLimiting("Login")]` to Identity account endpoints and verify login requests hit the login policy
-- [ ] 1.4 Configure `OnRejected` to log policy name, path, and client partition key, and verify a 429 response is logged
-- [ ] 1.5 Add a test that asserts a 429 is returned after exceeding the login policy limit and normal responses before the limit
+- [x] 1.1 Add `RateLimiterOptions` POCO and bind to configuration section `RateLimiting` with sensible defaults (global: 100 req/1 min, login: 10 req/1 min) and verify values resolve via `IOptions<RateLimiterOptions>`
+- [x] 1.2 Register `AddRateLimiter` in `Program.cs` with a global fixed-window policy and a stricter `Login` policy, and verify the app starts without exception
+- [x] 1.3 Apply `[EnableRateLimiting("Login")]` to Identity account endpoints and verify login requests hit the login policy
+- [x] 1.4 Configure `OnRejected` to log policy name, path, and client partition key, and verify a 429 response is logged
+- [x] 1.5 Add a test that asserts a 429 is returned after exceeding the login policy limit and normal responses before the limit
 
 ## 2. Identity Lockout
 

@@ -10,9 +10,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Minio;
+using System.Threading.RateLimiting;
 using Stripe;
 using System.Globalization;
 using System.Net.Http.Headers;
@@ -30,6 +32,7 @@ using VaultShop.Web.Services.ProductImages;
 using VaultShop.Web.Services.Payments;
 using VaultShop.Web.Services.Pagination;
 using VaultShop.Web.Services.Pricing;
+using VaultShopRateLimiterOptions = VaultShop.Web.Services.RateLimiting.RateLimiterOptions;
 using VaultShop.Web.Services.RichText;
 using VaultShop.Web.Services;
 using VaultShop.Web.Services.Billing;
@@ -74,6 +77,7 @@ builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Str
 builder.Services.Configure<BrandingOptions>(builder.Configuration.GetSection("Branding"));
 builder.Services.Configure<ThemeOptions>(builder.Configuration.GetSection("Theme"));
 builder.Services.Configure<PaginationOptions>(builder.Configuration.GetSection("Pagination"));
+builder.Services.Configure<VaultShopRateLimiterOptions>(builder.Configuration.GetSection("RateLimiting"));
 
 var dataProtectionKeysPath = builder.Configuration["DataProtection:KeysPath"];
 if (!string.IsNullOrWhiteSpace(dataProtectionKeysPath))
@@ -230,6 +234,45 @@ builder.Services.AddScoped<IOrderSummaryService, OrderSummaryService>();
 builder.Services.AddScoped<IOrderSummaryPdfGenerator, OrderSummaryPdfGenerator>();
 builder.Services.AddScoped<OrderAccessPolicy>();
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = (context, _) =>
+    {
+        var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("RateLimiter");
+        var endpoint = context.HttpContext.GetEndpoint();
+        var policy = endpoint?.Metadata.GetMetadata<EnableRateLimitingAttribute>()?.PolicyName ?? "Global";
+        var path = context.HttpContext.Request.Path;
+        var key = context.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        logger.LogWarning("Rate limit rejected: policy={Policy} path={Path} client={Client}", policy, path, key);
+        return ValueTask.CompletedTask;
+    };
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        var opts = httpContext.RequestServices.GetRequiredService<IOptions<VaultShopRateLimiterOptions>>().Value;
+        var key = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = opts.GlobalPermitLimit,
+            Window = opts.GlobalWindow,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit = opts.GlobalQueueLimit
+        });
+    });
+    options.AddPolicy("Login", httpContext =>
+    {
+        var opts = httpContext.RequestServices.GetRequiredService<IOptions<VaultShopRateLimiterOptions>>().Value;
+        var key = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = opts.LoginPermitLimit,
+            Window = opts.LoginWindow,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit = opts.LoginQueueLimit
+        });
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -250,6 +293,7 @@ app.UseStaticFiles();
 StripeConfiguration.ApiKey=builder.Configuration.GetSection("Stripe:SecretKey").Get<string>();
 app.UseRouting();
 
+app.UseRateLimiter();
 app.UseRequestLocalization(app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value);
 app.UseAuthentication();
 app.UseAuthorization();
