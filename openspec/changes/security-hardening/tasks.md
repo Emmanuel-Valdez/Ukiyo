@@ -29,6 +29,8 @@
 
 ## 5. Configuration & Documentation
 
-- [ ] 5.1 Add `RateLimiting` and `Identity:Lockout` sections to `appsettings.json` and `.env.compose.example`/`.env.platform.example` if applicable, and verify no secrets are committed
-- [ ] 5.2 Update `.local/context/core.md` or `plans/vaultshop-product-readiness-roadmap.md` Phase 11 status to note security hardening in progress
-- [ ] 5.3 Run `dotnet test VaultShop.sln` green and run a manual smoke check of 404 page, health endpoints, and a lockout sequence in the browser
+- [x] 5.1 Add `RateLimiting` and `Identity:Lockout` sections to `appsettings.json` and `.env.compose.example`/`.env.platform.example` if applicable, and verify no secrets are committed
+- [x] 5.2 Update `.local/context/core.md` or `plans/vaultshop-product-readiness-roadmap.md` Phase 11 status to note security hardening in progress
+- [x] 5.3 Run `dotnet test VaultShop.sln` green and run a manual smoke check of 404 page, health endpoints, and a lockout sequence in the browser
+
+Smoke check note (5.3): `dotnet test` is green (159/159). The 404 page, `/health/live` + `/health/ready`, and lockout sequence are each covered by integration tests booting the real `Program` (`StatusCodePagesTests`, `HealthChecksTests`, `IdentityLockoutTests`). A live-browser manual check on the running stack was not possible this session because Docker/Postgres were not running (`.env.compose` requires the `postgres`/`minio` compose services).
