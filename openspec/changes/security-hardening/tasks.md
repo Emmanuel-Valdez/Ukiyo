@@ -15,17 +15,17 @@
 
 ## 3. Status Code Pages
 
-- [ ] 3.1 Register `UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}")` in the correct pipeline order (before routing/after exception handling) and verify unknown routes return the shared error view with status 404
-- [ ] 3.2 Add localized error title/body strings to existing shared resources or `Home` resources for `es-AR` and `en-US`, and verify the 404 page renders in both cultures
-- [ ] 3.3 Ensure the error view does not render exception details outside development, and verify the response body contains no stack trace in a non-dev environment
-- [ ] 3.4 Add a test that asserts a non-existent route returns 404 with the shared view and a known localized phrase
+- [x] 3.1 Register `UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}")` in the correct pipeline order (before routing/after exception handling) and verify unknown routes return the shared error view with status 404
+- [x] 3.2 Add localized error title/body strings to existing shared resources or `Home` resources for `es-AR` and `en-US`, and verify the 404 page renders in both cultures
+- [x] 3.3 Ensure the error view does not render exception details outside development, and verify the response body contains no stack trace in a non-dev environment
+- [x] 3.4 Add a test that asserts a non-existent route returns 404 with the shared view and a known localized phrase
 
 ## 4. Health Checks
 
-- [ ] 4.1 Register `AddHealthChecks` in `Program.cs` with `AddDbContextCheck<ApplicationDbContext>` and a custom MinIO/S3 storage check, and verify the app starts
-- [ ] 4.2 Map `/health/live` (no checks) and `/health/ready` (database + storage checks) with `AllowAnonymous` and verify both respond with the expected status codes
-- [ ] 4.3 Ensure health response JSON contains no connection strings, keys, or bucket credentials, and verify by inspecting response body
-- [ ] 4.4 Add tests that assert `/health/live` returns 200 and `/health/ready` reflects database/storage health
+- [x] 4.1 Register `AddHealthChecks` in `Program.cs` with `AddDbContextCheck<ApplicationDbContext>` and a custom MinIO/S3 storage check, and verify the app starts
+- [x] 4.2 Map `/health/live` (no checks) and `/health/ready` (database + storage checks) with `AllowAnonymous` and verify both respond with the expected status codes
+- [x] 4.3 Ensure health response JSON contains no connection strings, keys, or bucket credentials, and verify by inspecting response body
+- [x] 4.4 Add tests that assert `/health/live` returns 200 and `/health/ready` reflects database/storage health
 
 ## 5. Configuration & Documentation
 

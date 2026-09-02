@@ -1,6 +1,7 @@
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OAuth.Claims;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Minio;
 using System.Threading.RateLimiting;
@@ -216,6 +218,9 @@ switch (imageStorageProvider.Trim().ToUpperInvariant())
 }
 
 builder.Services.AddScoped<IProductImageService, ProductImageService>();
+builder.Services.AddHealthChecks()
+	.AddDbContextCheck<ApplicationDbContext>(name: "database")
+	.AddCheck<StorageHealthCheck>("storage");
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddHttpClient("MercadoPago", client =>
 {
@@ -294,6 +299,7 @@ else
 	app.UseHsts();
 }
 
+app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");
 app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -317,6 +323,19 @@ else
 }
 
 app.MapRazorPages();
+
+// Health endpoints: /health/live reports process liveness only; /health/ready reflects real dependency health.
+// No connection strings, keys, or credentials are ever written to the response body.
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+	Predicate = _ => false,
+	ResponseWriter = WriteHealthResponseAsync
+});
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+	Predicate = _ => true,
+	ResponseWriter = WriteHealthResponseAsync
+});
 
 app.MapGet("/site.webmanifest", (IOptions<BrandingOptions> brandingOptions) =>
 {
@@ -349,6 +368,19 @@ app.MapControllerRoute(
 	name: "default",
 	pattern: "{culture=es-AR}/{area=Customer}/{controller=Home}/{action=Index}/{id?}");
 app.Run();
+
+async Task WriteHealthResponseAsync(HttpContext context, HealthReport report)
+{
+	context.Response.ContentType = "application/json; charset=utf-8";
+	var checks = report.Entries
+		.Select(e => new { name = e.Key, status = e.Value.Status.ToString() })
+		.ToList();
+	await context.Response.WriteAsJsonAsync(new
+	{
+		status = report.Status.ToString(),
+		checks
+	});
+}
 
 void SeedDatabase()
 {

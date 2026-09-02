@@ -120,6 +120,18 @@
   <data name="AreYouSure" xml:space="preserve">
     <value>Are you sure?</value>
   </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>An error occurred</value>
+  </data>
+  <data name="ErrorMessage" xml:space="preserve">
+    <value>An error occurred while processing your request. Please try again.</value>
+  </data>
+  <data name="ErrorNotFound" xml:space="preserve">
+    <value>Page not found</value>
+  </data>
+  <data name="ErrorMessageNotFound" xml:space="preserve">
+    <value>The page you are looking for does not exist or has been moved.</value>
+  </data>
   <data name="AvailablesInStore" xml:space="preserve">
     <value>Availables in store</value>
   </data>

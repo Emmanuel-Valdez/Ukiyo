@@ -157,9 +157,20 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 		}
 
 		[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-		public IActionResult Error()
+		[Route("/Home/Error")]
+		public IActionResult Error(int? statusCode)
 		{
-			return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+			var code = statusCode ?? Response.StatusCode;
+			var title = _localizer[code == 404 ? "ErrorNotFound" : "ErrorTitle"].Value;
+			var message = _localizer[code == 404 ? "ErrorMessageNotFound" : "ErrorMessage"].Value;
+
+			return View(new ErrorViewModel
+			{
+				StatusCode = code,
+				Title = title,
+				Message = message,
+				RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+			});
 		}
 
 
