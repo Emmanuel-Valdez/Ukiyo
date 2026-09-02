@@ -89,7 +89,14 @@ builder.Services.AddRazorPages(options =>
 {
 	options.Conventions.AuthorizeAreaFolder("Identity", "/Account/Manage");
 });
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Lockout.AllowedForNewUsers = builder.Configuration.GetValue("Identity:Lockout:AllowedForNewUsers", true);
+    options.Lockout.MaxFailedAccessAttempts = builder.Configuration.GetValue<int>("Identity:Lockout:MaxFailedAccessAttempts", 5);
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(builder.Configuration.GetValue<double>("Identity:Lockout:DefaultLockoutTimeSpanMinutes", 5));
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
 
 // Google OAuth (optional: keys Google:ClientId/Google:ClientSecret, i.e. env vars Google__ClientId/Google__ClientSecret; only registered when both are set).
 var googleClientId = builder.Configuration["Google:ClientId"];

@@ -8,10 +8,10 @@
 
 ## 2. Identity Lockout
 
-- [ ] 2.1 Configure Identity lockout options (`AllowedForNewUsers`, `MaxFailedAccessAttempts`, `DefaultLockoutTimeSpan`) via `IdentityOptions` and bind from configuration section `Identity:Lockout`, then verify options values at runtime
-- [ ] 2.2 Change `LoginModel.OnPostAsync` to pass `lockoutOnFailure: true` to `PasswordSignInAsync` and verify the generated lockout counter increments on failed attempts
-- [ ] 2.3 Verify external login, password reset, and register flows still work when lockout is enabled
-- [ ] 2.4 Add a test that asserts repeated failed logins lock the account and the same generic message is returned for locked and non-existent users
+- [x] 2.1 Configure Identity lockout options (`AllowedForNewUsers`, `MaxFailedAccessAttempts`, `DefaultLockoutTimeSpan`) via `IdentityOptions` and bind from configuration section `Identity:Lockout`, then verify options values at runtime
+- [x] 2.2 Change `LoginModel.OnPostAsync` to pass `lockoutOnFailure: true` to `PasswordSignInAsync` and verify the generated lockout counter increments on failed attempts
+- [x] 2.3 Verify external login, password reset, and register flows still work when lockout is enabled
+- [x] 2.4 Add a test that asserts repeated failed logins lock the account and the same generic message is returned for locked and non-existent users
 
 ## 3. Status Code Pages
 
