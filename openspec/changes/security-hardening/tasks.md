@@ -26,6 +26,8 @@
 - [x] 4.2 Map `/health/live` (no checks) and `/health/ready` (database + storage checks) with `AllowAnonymous` and verify both respond with the expected status codes
 - [x] 4.3 Ensure health response JSON contains no connection strings, keys, or bucket credentials, and verify by inspecting response body
 - [x] 4.4 Add tests that assert `/health/live` returns 200 and `/health/ready` reflects database/storage health
+- [x] 4.5 Add unit tests for `StorageHealthCheck` covering MinIO paths: bucket exists, bucket not found, exception thrown, null client/options — mock `IMinioClient`, no infra needed
+- [x] 4.6 Delete orphaned `CreateClient()` method in `HealthChecksTests.cs:7-8`
 
 ## 5. Configuration & Documentation
 

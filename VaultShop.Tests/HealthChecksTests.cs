@@ -4,9 +4,6 @@ namespace VaultShop.Web.Tests;
 
 public class HealthChecksTests
 {
-    private static HttpClient CreateClient() =>
-        new CustomWebApplicationFactory().CreateClient();
-
     [Fact]
     public async Task Live_Returns200_WithoutDependencyChecks()
     {
