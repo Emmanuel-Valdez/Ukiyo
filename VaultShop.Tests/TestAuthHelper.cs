@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Localization;
 
 namespace VaultShop.Web.Tests
 {
@@ -8,6 +9,12 @@ namespace VaultShop.Web.Tests
         private static readonly Regex TokenRegex = new(
             "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"|value=\"([^\"]+)\"[^>]*name=\"__RequestVerificationToken\"",
             RegexOptions.Compiled);
+
+        public static void SetRequestCulture(HttpClient client, string culture)
+        {
+            client.DefaultRequestHeaders.Add("Cookie",
+                $"{CookieRequestCultureProvider.DefaultCookieName}={CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture))}");
+        }
 
         public static async Task<string> GetAntiforgeryTokenAsync(HttpClient client, string url)
         {

@@ -25,6 +25,7 @@ public class IdentityLockoutTests
             });
         });
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        TestAuthHelper.SetRequestCulture(client, "en-US");
 
         // Use a fresh email to avoid cross-test state issues.
         var email = "lockout.tests@vaultshop.local";
@@ -120,6 +121,7 @@ public class IdentityLockoutTests
             });
         });
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        TestAuthHelper.SetRequestCulture(client, "en-US");
 
         var email = "nolockout.tests@vaultshop.local";
         using (var scope = factory.Services.CreateScope())

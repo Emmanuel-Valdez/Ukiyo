@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
@@ -366,7 +367,9 @@ app.MapGet("/terms", (HttpContext ctx) => {
 });
 app.MapControllerRoute(
 	name: "default",
-	pattern: "{culture=es-AR}/{area=Customer}/{controller=Home}/{action=Index}/{id?}");
+	pattern: "{culture=es-AR}/{area=Customer}/{controller=Home}/{action=Index}/{id?}",
+	defaults: new { culture = "es-AR", area = "Customer", controller = "Home", action = "Index" },
+	constraints: new { culture = new RegexRouteConstraint("^(es-AR|en-US)$") });
 app.Run();
 
 async Task WriteHealthResponseAsync(HttpContext context, HealthReport report)
