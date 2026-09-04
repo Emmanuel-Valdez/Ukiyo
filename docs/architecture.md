@@ -1,44 +1,35 @@
 # VaultShop Architecture
 
-VaultShop is a self-hosted ASP.NET Core 8 MVC e-commerce application deployed on a real Ubuntu VPS. The current architecture is intentionally simple: one monolithic web app, one PostgreSQL database, one MinIO object storage service, and Nginx as the public HTTPS reverse proxy.
+VaultShop is a self-hosted ASP.NET Core 8 MVC monolith on Ubuntu 24.04 VPS: one web app, one PostgreSQL 16, one MinIO S3, Nginx HTTPS proxy. Two stores (VaultShop + UkiyoStudio) share the platform but are fully isolated per DB/bucket/creds.
 
 ```mermaid
 flowchart TD
-    user[Browser] -->|HTTPS| nginx[Nginx reverse proxy]
-    nginx -->|127.0.0.1:8080| web[ASP.NET Core 8 MVC app]
-    nginx -->|/product-images| minio[MinIO product image bucket]
-    web -->|EF Core / Npgsql| postgres[(PostgreSQL)]
-    web -->|S3-compatible API| minio
-    web -->|Checkout sessions and webhooks| stripe[Stripe]
-    web -->|Identity roles and auth cookies| identity[ASP.NET Core Identity]
+    user[Browser es-AR/en-US] -->|HTTPS| nginx[Nginx 80/443]
+    nginx -->|127.0.0.1:8080| vault[VaultShop web]
+    nginx -->|127.0.0.1:8083| ukiyo[UkiyoStudio web]
+    nginx -->|/product-images| minio[(MinIO buckets)]
+    vault -->|Npgsql| pgVault[(vaultshop DB)]
+    ukiyo -->|Npgsql| pgUkiyo[(ukiyostudio DB)]
+    vault -->|S3 API| minio
+    ukiyo -->|S3 API| minio
+    vault -->|Checkout/Webhooks| stripe[Stripe]
+    vault & ukiyo -->|Checkout/Webhooks| mp[Mercado Pago]
+    vault & ukiyo -->|OAuth| google[Google]
+    vault & ukiyo -->|health| health[/health/live + /health/ready\]
 ```
 
 ## Deployment Boundaries
-
-- Only Nginx is public on `80/443`.
-- PostgreSQL is private to the host/Docker network.
-- MinIO API and console are not exposed directly to the public internet.
-- Product images are served through the public HTTPS domain instead of exposing MinIO directly.
-- SSH/admin access is kept private through Tailscale.
+- Public only: Nginx 80/443; PG + MinIO private (MinIO API `127.0.0.1:9000` via `/product-images` proxy)
+- SSH: Tailscale; `COMPOSE_PROJECT_NAME` stable (`vaultshop-platform`/`vaultshop`/`ukiyostudio`)
+- Platform compose (`postgres`, `minio`, volumes, network) + per-store compose (`web` only, loopback port, DP keys)
+- Per-store isolation: separate DB + role (cross-DB denied), separate bucket + scoped MinIO user (cross-bucket denied), separate backups
 
 ## Application Boundaries
+- Images via `IImageStorageService`; `ProductImage.ObjectKey` = storage identity, `ImageUrl` = display URL
+- Checkout transactional (`CheckoutService.ExecuteInTransaction`); pagination `PagedList<T>` 12/page; billing QuestPDF from snapshot
+- Payments: keyed `IPaymentSessionService`/`IPaymentRefundService` by `SD.PaymentMethod*`; signed webhooks + server-side lookup drive status, browser return only verifies; refund on cancel
+- Hardening: `ForwardedHeaders` (OAuth behind proxy), `AddRateLimiter` (Global + Login per-IP 429), `Identity Lockout`, `UseStatusCodePagesWithReExecute` (branded 404/500), `AddHealthChecks` (DB + `StorageHealthCheck`) → `/health/live` (200) / `/health/ready` (200/503)
+- Config-driven branding/theme (`Branding__*`, `Theme__*` hex → CSS vars), l10n `es-AR`/`en-US`, `Database__RunMigrationsOnStartup=false` in prod
 
-- Product image persistence goes through `IImageStorageService`.
-- `ProductImage.ObjectKey` is the storage identity.
-- `ProductImage.ImageUrl` is a browser-facing display URL.
-- Checkout order creation is transactional through `CheckoutService`.
-- Stripe payment status is updated through signed webhooks.
-- Production-style deployments keep `Database__RunMigrationsOnStartup=false` and apply schema changes intentionally.
-
-## Future Client Deployment Direction
-
-VaultShop remains the public portfolio/demo deployment. A future real client deployment should be a separate single-tenant installation using the same codebase shape but with isolated configuration:
-
-- Separate domain/subdomain.
-- Separate PostgreSQL database and user.
-- Separate MinIO bucket and credentials.
-- Separate Stripe keys and webhook secret.
-- Separate backups and restore verification.
-- Separate branding configuration and private assets.
-
-This avoids premature multi-tenancy while keeping the system maintainable.
+## Future Client Deployment
+Reuse same codebase shape, new per-store env + compose project + domain + DB/bucket/creds + Stripe/MP secrets + backups/cron. For full VM/K8s isolation, skip shared platform.

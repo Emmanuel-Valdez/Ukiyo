@@ -28,25 +28,23 @@ Selected current flows for backend/portfolio review.
 
 ## Features
 
-- Customer storefront with product browsing, favorites, cart, checkout, and retail/wholesale pricing.
-- Admin product, category, inventory, company, order, and price-management flows.
-- Admin pricing calculator for fabrics, garment hardware, packaging, fixed costs, separate retail/wholesale percentage costs, profit margins, and final prices.
-- Final price dashboard that compares current storefront prices with calculated cost-based suggestions.
-- ASP.NET Core Identity with roles for Customer, Company, Employee, and Admin users.
-- Stripe Checkout and Mercado Pago Checkout Pro integrations with webhook-based payment status updates and refunds on order cancellation.
-- Product image upload validation, resizing, metadata persistence, and storage abstraction.
-- Localization for Spanish and English.
+- Customer storefront with product browsing (paginated, 12/page), search (case/accent-insensitive), favorites, cart, checkout, and retail/wholesale pricing.
+- Admin product, category, company, order, and price-management flows.
+- Admin pricing calculator for fabrics, hardware, packaging, fixed costs, separate retail/wholesale percentage costs, profit margins, and final prices; dashboard compares live prices vs cost-based suggestions.
+- Internal order summary ("Resumen de pedido") — HTML view + QuestPDF PDF download, fiscal snapshot for Company orders, explicitly non-fiscal.
+- ASP.NET Core Identity with roles Customer/Company/Employee/Admin, Google OAuth, rate limiting + lockout, branded 404/500.
+- Stripe Checkout + Mercado Pago Checkout Pro + Bank Transfer, provider-verified webhooks/browser returns, refunds on cancellation.
+- Product image upload validation, resizing, metadata persistence via `IImageStorageService` (Local/MinIO).
+- Localization es-AR/en-US; health endpoints (`/health/live`, `/health/ready`) for liveness/readiness probes.
 
 ## Tech Stack
 
-- ASP.NET Core 8 MVC
-- Entity Framework Core with PostgreSQL/Npgsql
-- ASP.NET Core Identity + Google OAuth
-- Stripe Checkout
-- Resend email provider with fake/local email mode
-- Docker and Docker Compose
-- MinIO/S3-compatible product image storage
-- xUnit, Moq, and SQLite in-memory tests for selected service/integration coverage
+- ASP.NET Core 8 MVC · EF Core 8 + Npgsql (PostgreSQL 16)
+- ASP.NET Core Identity + Google OAuth · Rate limiting (`System.Threading.RateLimiting`) + lockout · Health checks
+- Stripe Checkout + Mercado Pago Checkout Pro + Bank Transfer
+- Resend email (Fake/Unconfigured) + QuestPDF (order summary PDF, community license)
+- Docker & Docker Compose (platform + per-store stacks) + Nginx HTTPS proxy + MinIO S3
+- xUnit + Moq + SQLite in-memory (159 tests, service/integration/HTTP)
 
 ## Architecture Highlights
 
@@ -55,9 +53,12 @@ Selected current flows for backend/portfolio review.
 - Retail and wholesale percentage costs are modeled separately; wholesale suggestions include wholesale profit plus wholesale percentage costs in the final margin formula.
 - Product image persistence is behind `IImageStorageService`; the app supports local filesystem storage and MinIO.
 - `ProductImage.ObjectKey` is the storage identity for uploaded images. `ImageUrl` is used only as the browser display URL.
-- Checkout order creation is handled by `CheckoutService` and wrapped in a transaction to avoid partial orders.
-- Stripe Checkout confirmation is hardened: signed webhooks and server-side Checkout Session reads are the trusted payment sources; browser redirects only trigger verification, `session_id` must match the stored order session, stale/terminal sessions are ignored, and unpaid orders cannot be shipped. Mercado Pago follows the same model: signed webhook validation, provider-side preference/payment verification, and refunds on order cancellation (refund failures fail open and log for manual review).
-- Customer orders remain `Pending / Pending` until Stripe reports `paid`; Company delayed-payment orders can be prepared before payment, but shipping remains blocked until `PaymentStatus == Approved`.
+- Checkout via `CheckoutService` is transactional (no partial orders); Company delayed-payment still inside the same transaction.
+- Payment confirmation is provider-verified: signed Stripe/Mercado Pago webhooks + server-side session/preference/payment lookups; browser redirects only trigger verification, `session_id`/`preference_id` must match the stored order, stale/terminal sessions ignored, unpaid not shippable; refund on cancellation (fail-open, logged).
+- Customer orders stay `Pending/Pending` until provider reports `paid`; Company delayed-payment can prepare before payment but shipping blocked until `PaymentStatus == Approved`.
+- Pagination is in-memory `PagedList<T>` (ordered by `Id`, `pageNumber` param, `#productos` anchor, shared `_Pager`).
+- Order summary PDF is QuestPDF from persisted `OrderHeader` snapshot; company fiscal fields (razón social/domicilio required, CUIT optional) snapshotted at checkout.
+- Security: global fixed-window `RateLimiter` + stricter `Login` policy (per-IP, 429), `Identity Lockout` from config, `UseStatusCodePagesWithReExecute` branded 404/500, `ForwardedHeaders` for OAuth behind Nginx; `DataProtection` keys persisted when configured.
 - Production-like environments can disable startup migrations with `Database__RunMigrationsOnStartup=false`.
 - The public deployment runs behind Nginx HTTPS reverse proxy on a Linux VPS, with PostgreSQL and MinIO kept off the public internet.
 - Shared platform deployments (VaultShop + UkiyoStudio) isolate each store in its own PostgreSQL database and MinIO bucket with scoped credentials, so one store cannot read another store's data; backup scripts and MinIO API users are per-store.
@@ -88,42 +89,17 @@ Configuration is supplied through environment variables or ignored `.env` files.
 Common variables:
 
 ```text
-ConnectionStrings__DefaultConnection
-Database__RunMigrationsOnStartup
-Stripe__SecretKey
-Stripe__PublishableKey
-Stripe__WebhookSecret
-Payments__MercadoPagoEnabled
-Payments__MercadoPagoAccessToken
-Payments__MercadoPagoWebhookSecret
-Google__ClientId
-Google__ClientSecret
-Email__Provider
-Email__UseFakeEmailSender
-Resend__ApiKey
-Resend__FromEmail
-Seed__AdminEmail
-Seed__AdminPassword
-SiteUrl
-Branding__PublicName
-Branding__LogoPath
-Branding__LogoDarkPath
-Branding__MarkPath
-Branding__AppleTouchIconPath
-Branding__SocialPreviewImagePath
-Branding__TwitterSite
-Theme__Primary
-Theme__PrimaryDark
-Theme__Accent
-Theme__Surface
-Theme__SurfaceDark
-ImageStorage__Provider
-ImageStorage__Minio__Endpoint
-ImageStorage__Minio__UseSsl
-ImageStorage__Minio__BucketName
-ImageStorage__Minio__AccessKey
-ImageStorage__Minio__SecretKey
-ImageStorage__Minio__PublicBaseUrl
+ConnectionStrings__DefaultConnection  Database__RunMigrationsOnStartup  DataProtection__KeysPath
+Stripe__SecretKey  Stripe__PublishableKey  Stripe__WebhookSecret
+Payments__MercadoPagoEnabled  Payments__MercadoPagoAccessToken  Payments__MercadoPagoWebhookSecret
+Payments__BankTransferEnabled  Payments__AllowDevelopmentManualApproval
+Google__ClientId  Google__ClientSecret
+Email__Provider  Email__UseFakeEmailSender  Email__AdminEmail  Resend__ApiKey  Resend__FromEmail
+Seed__AdminEmail  Seed__AdminPassword  SiteUrl
+Branding__PublicName  Branding__LogoPath  Branding__LogoDarkPath  Branding__MarkPath  Branding__AppleTouchIconPath  Branding__SocialPreviewImagePath  Branding__TwitterSite
+Theme__Primary  Theme__PrimaryDark  Theme__Accent  Theme__Surface  Theme__SurfaceDark
+ImageStorage__Provider  ImageStorage__Minio__Endpoint  ImageStorage__Minio__UseSsl  ImageStorage__Minio__BucketName  ImageStorage__Minio__AccessKey  ImageStorage__Minio__SecretKey  ImageStorage__Minio__PublicBaseUrl
+Pagination__PageSize  RateLimiting__GlobalPermitLimit  RateLimiting__LoginPermitLimit  Identity__Lockout__MaxFailedAccessAttempts
 ```
 
 > Note: Facebook login has been removed; Google is the only supported external provider. Set Google__ClientId and Google__ClientSecret to enable Google sign-in.
@@ -248,39 +224,30 @@ For a VPS hosting VaultShop and UkiyoStudio as separate single-tenant stores on 
 
 ## Tests
 
-Run the automated tests:
-
 ```powershell
-dotnet test VaultShop.sln
+dotnet test VaultShop.sln   # 159 tests — dotnet build --no-restore clean
 ```
 
-Current tests focus on high-value service behavior: upload validation, checkout rules, transactional order creation, payment provider routing and session creation (Stripe and Mercado Pago), webhook verification, refunds, and pricing calculator formulas/publish behavior.
+Covers upload validation, checkout/order transactions, provider routing + session creation (Stripe/MP), signed webhooks, refunds, pricing formulas/publish, pagination, billing snapshot/PDF guards, rate limiting, lockout, status pages, health checks.
 
 ## Deployment Direction
 
-The current public deployment runs on an Ubuntu 24.04 Oracle/VPS server using Docker Compose behind host-level Nginx with HTTPS.
+Live on Ubuntu 24.04 Oracle VPS, Docker Compose behind host Nginx HTTPS (only 80/443 public).
 
-Current deployment shape:
+Shape: PostgreSQL + MinIO private on Docker network; images via `https://{domain}/product-images`; secrets in git-ignored `.platform.env`/`.env.compose`; `Database__RunMigrationsOnStartup=false` (intentional migrations); `DataProtection__KeysPath` persisted.
 
-- Keep PostgreSQL and MinIO private on the Docker network.
-- Expose only HTTP/HTTPS publicly through a reverse proxy.
-- Use private environment files or host secrets for configuration.
-- Keep `Database__RunMigrationsOnStartup=false` and run migrations intentionally.
-- Serve product images from MinIO through the public HTTPS domain instead of exposing the MinIO console.
+Hardening done: automated store-parametric backups (weekly VaultShop, daily UkiyoStudio) with freshness/disk checks, container `unless-stopped`, health probes (`/health/live` liveness, `/health/ready` DB+storage), rate limiting + lockout, branded 404/500.
 
-Remaining deployment hardening:
+Still manual: restore drills (tested locally with `pg_restore --no-owner` + `mc mirror`), webhook/user-flow smoke after deploy, broader observability if real traffic grows.
 
-- PostgreSQL and MinIO backups are automated via store-parametric scripts (weekly for the demo, daily for UkiyoStudio) with freshness and disk checks; restore drills remain manual.
-- Expand monitoring beyond uptime/TLS if the project starts handling real usage.
-- Verify payment webhooks and key user flows after every deployment change.
-
-Operations runbook: [`docs/operations/runbook.md`](docs/operations/runbook.md).
+Runbook: [`docs/operations/runbook.md`](docs/operations/runbook.md).
 
 ## Current Limitations / Next Work
 
-- Backups are automated with cron and freshness/disk checks; restore has been tested manually and restore drills are repeated occasionally.
-- Manual browser checks should still be repeated after deployment changes for Stripe paid/unpaid flows, branding/theme overrides, and fulfillment guards.
-- The storefront frontend is functional, but backend/deployment evidence remains the main portfolio value.
+- Stock/inventory not yet tracked (`Product` has no `StockQuantity` — next openspec `stock-inventory`); oversell possible until guards land.
+- Backups automated; restore drills are manual (repeat after backup-process changes).
+- Smoke-test after deploys: paid/unpaid flows (Stripe/MP), bank-transfer approval, branding/theme, pagination, order-summary PDF, 404/health.
+- Frontend is functional polish (stepper, password toggles, sakura 404); portfolio value is backend/ops evidence.
 
 ## Portfolio Scope
 
