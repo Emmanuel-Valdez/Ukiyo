@@ -1,15 +1,81 @@
 ﻿@model ErrorViewModel
 @{
     ViewData["Title"] = Model.Title ?? "Error";
+    var is404 = Model.StatusCode == 404;
 }
 
-<section class="py-5 text-center">
-    <h1 class="display-4 fw-bold">@(Model.StatusCode?.ToString() ?? "")</h1>
-    <h2 class="text-danger">@(Model.Title ?? "Error")</h2>
-    <p class="lead">@(Model.Message ?? "")</p>
-    <a class="btn btn-primary mt-3" asp-area="Customer" asp-controller="Home" asp-action="Index">@Localizer["BackHome"]</a>
-    @if (Model.ShowRequestId)
-    {
-        <p class="mt-4"><small><strong>@Localizer["RequestId"]:</strong> <code>@Model.RequestId</code></small></p>
-    }
-</section>
+@if (is404)
+{
+    @* ponytail: 404 ukiyo — CSS inline + sakura-tree.png, 0 JS, tokens var(--theme-*) para coherencia VaultShop/Ukiyo *@
+    <style>
+        .ukiyo-404{position:relative;width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);margin-bottom:-1rem;min-height:72vh;display:grid;grid-template-columns:1fr;align-items:center;isolation:isolate;overflow:hidden;background:linear-gradient(180deg,#fdfbfa 0%,var(--theme-surface, #F3E9E4) 70%,#ede0db 100%)}
+        @@media(min-width:1024px){.ukiyo-404{grid-template-columns:45% 55%;min-height:78vh}}
+        @@media(min-width:1024px){.ukiyo-404 .content-container{grid-column:2}}
+        .ukiyo-404 .horizon{position:absolute;left:0;right:0;bottom:0;width:100%;height:28%;z-index:0;pointer-events:none}
+        .ukiyo-404 .horizon svg{display:block;width:100%;height:100%}
+        .ukiyo-404 .mountain-back{fill:#f3e8e7} .ukiyo-404 .mountain-front{fill:#eae0df;opacity:.6}
+        .ukiyo-404 .water{position:absolute;left:0;right:0;bottom:0;height:15%;background:linear-gradient(180deg,transparent,rgba(245,235,232,.8));z-index:1;pointer-events:none}
+        .ukiyo-404 .tree{position:absolute;z-index:2;left:-4vw;bottom:0;width:min(50vw,650px);max-height:80vh;pointer-events:none;user-select:none}
+        @@media(max-width:1023px){.ukiyo-404 .tree{left:-10vw;bottom:0;width:min(55vw,320px);max-height:65vh;opacity:.92}}
+        .ukiyo-404 .falling-petals{position:absolute;inset:0;z-index:5;pointer-events:none}
+        .ukiyo-404 .petal{position:absolute;width:10px;height:16px;border-radius:80% 20% 75% 25%;background:linear-gradient(135deg,#fff0f2,#e8a0b0);opacity:0;transform-origin:center;animation:ukiyo-fall var(--d) linear infinite, ukiyo-sway var(--s) ease-in-out infinite;animation-delay:var(--del)}
+        .ukiyo-404 .petal:nth-child(1){left:15%;top:-20px;--d:11s;--s:3.2s;--del:-1s;transform:scale(.9)}
+        .ukiyo-404 .petal:nth-child(2){left:30%;top:-20px;--d:14s;--s:4.1s;--del:-5s;transform:scale(.7)}
+        .ukiyo-404 .petal:nth-child(3){left:42%;top:-20px;--d:10s;--s:2.8s;--del:-2s;transform:scale(1.2)}
+        .ukiyo-404 .petal:nth-child(4){left:55%;top:-20px;--d:13s;--s:3.5s;--del:-7s;transform:scale(.8)}
+        .ukiyo-404 .petal:nth-child(5){left:68%;top:-20px;--d:16s;--s:4.5s;--del:-4s;transform:scale(.6)}
+        .ukiyo-404 .petal:nth-child(6){left:22%;top:-20px;--d:12s;--s:3s;--del:-9s;transform:scale(1)}
+        .ukiyo-404 .petal:nth-child(7){left:48%;top:-20px;--d:15s;--s:3.8s;--del:-11s;transform:scale(.75)}
+        .ukiyo-404 .petal:nth-child(8){left:78%;top:-20px;--d:11s;--s:2.9s;--del:-3s;transform:scale(1.1)}
+        .ukiyo-404 .petal:nth-child(9){left:88%;top:-20px;--d:17s;--s:4.2s;--del:-6s;transform:scale(.5)}
+        .ukiyo-404 .petal:nth-child(10){left:35%;top:-20px;--d:13s;--s:3.3s;--del:-12s;transform:scale(.95)}
+        @@keyframes ukiyo-fall{0%{top:-5%;opacity:0}8%{opacity:.85}90%{opacity:.85}100%{top:105%;opacity:0}}
+        @@keyframes ukiyo-sway{0%,100%{transform:translateX(0) rotate(0deg) rotateY(0)}50%{transform:translateX(65px) rotate(130deg) rotateY(180deg)}}
+        @@media(prefers-reduced-motion:reduce){.ukiyo-404 .petal{animation:none;opacity:.4;top:40%}}
+        .ukiyo-404 .content-container{position:relative;z-index:10;display:flex;justify-content:center;align-items:center;padding:24px}
+        .ukiyo-404 .content{max-width:460px;text-align:center}
+        @@media(min-width:1024px){.ukiyo-404 .content{text-align:left}}
+        .ukiyo-404 .error-code{font-family:"Playfair Display",serif;font-size:clamp(6.5rem,16vw,11rem);font-weight:900;line-height:.9;margin:0;background:linear-gradient(135deg,var(--theme-primary,#3B2F3D),#c97a8e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.04em}
+        .ukiyo-404 .error-title{font-family:"Playfair Display",serif;font-size:clamp(1.3rem,4vw,2rem);font-weight:700;color:var(--theme-primary,#3B2F3D);margin:15px 0;letter-spacing:-.01em}
+        .ukiyo-404 .error-message{font-size:1rem;color:#6b5f63;line-height:1.6;margin:0 0 28px 0}
+        .ukiyo-404 .btn-home{display:inline-flex;align-items:center;justify-content:center;padding:13px 36px;background:var(--theme-primary,#3B2F3D);color:#fff;font-weight:500;font-size:.95rem;border-radius:30px;transition:transform .2s cubic-bezier(.16,1,.3,1),background-color .2s ease;box-shadow:0 4px 15px rgba(59,47,61,.18);text-decoration:none}
+        .ukiyo-404 .btn-home:hover{background:#4a3a4c;transform:translateY(-2px);box-shadow:0 8px 22px rgba(59,47,61,.25);color:#fff} .ukiyo-404 .btn-home:active{transform:translateY(0)}
+        [data-bs-theme=dark] .ukiyo-404{background:linear-gradient(180deg,#2B222D 0%,#3B2F3D 70%,#1e1918 100%)}
+        [data-bs-theme=dark] .ukiyo-404 .error-title{color:#e8eaf2} [data-bs-theme=dark] .ukiyo-404 .error-message{color:#c7cfdd}
+        [data-bs-theme=dark] .ukiyo-404 .mountain-back{fill:#2a2428} [data-bs-theme=dark] .ukiyo-404 .mountain-front{fill:#3a2f36}
+    </style>
+
+    <section class="ukiyo-404" role="main" aria-labelledby="ukiyo-err-title">
+        <div class="horizon" aria-hidden="true"><svg viewBox="0 0 1440 250" preserveAspectRatio="none"><path class="mountain-back" d="M0,160 Q280,90 560,140 T1120,110 T1440,150 L1440,250 L0,250 Z"/><path class="mountain-front" d="M0,200 Q400,150 800,190 T1440,170 L1440,250 L0,250 Z"/></svg></div>
+        <div class="water" aria-hidden="true"></div>
+        <div class="falling-petals" aria-hidden="true"><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div></div>
+
+        <img class="tree" src="/images/sakura-tree.png" alt="" aria-hidden="true">
+
+        <div class="content-container">
+            <div class="content">
+                <h1 class="error-code">@(Model.StatusCode?.ToString() ?? "404")</h1>
+                <h2 class="error-title" id="ukiyo-err-title">@(Model.Title ?? "Página no encontrada")</h2>
+                <p class="error-message">@(Model.Message ?? "La página que buscas no existe o fue movida.")</p>
+                <a class="btn-home" asp-area="Customer" asp-controller="Home" asp-action="Index">@Localizer["BackHome"]</a>
+                @if (Model.ShowRequestId)
+                {
+                    <p class="mt-3"><small><strong>@Localizer["RequestId"]:</strong> <code>@Model.RequestId</code></small></p>
+                }
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <section class="py-5 text-center">
+        <h1 class="display-4 fw-bold">@(Model.StatusCode?.ToString() ?? "")</h1>
+        <h2 class="text-danger">@(Model.Title ?? "Error")</h2>
+        <p class="lead">@(Model.Message ?? "")</p>
+        <a class="btn btn-primary mt-3" asp-area="Customer" asp-controller="Home" asp-action="Index">@Localizer["BackHome"]</a>
+        @if (Model.ShowRequestId)
+        {
+            <p class="mt-4"><small><strong>@Localizer["RequestId"]:</strong> <code>@Model.RequestId</code></small></p>
+        }
+    </section>
+}
