@@ -118,6 +118,12 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 			if (!ModelState.IsValid)
 				return RedirectToAction(nameof(Index));
 
+			if (shoppingCart.Count < 1)
+			{
+				TempData["error"] = _localizer["NotEnoughStock"].Value;
+				return RedirectToAction(nameof(Details), new { productId = shoppingCart.ProductId });
+			}
+
 			var product = _unitOfWork.Product.Get(u => u.Id == shoppingCart.ProductId && u.IsDeleted == false && u.IsAvailableInStore == true);
 			if (product == null)
 			{

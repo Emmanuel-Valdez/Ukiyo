@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using VaultShop.DataAccess.Repository.IRepository;
 using VaultShop.Models;
 using VaultShop.Models.ViewModels;
@@ -184,7 +185,9 @@ namespace VaultShop.Web.Services.Checkout
 				shoppingCartVM.OrderHeader.PaymentDueDate = DateOnly.FromDateTime(shoppingCartVM.OrderHeader.OrderDate.AddDays(SD.CompanyPaymentDueDays));
 			}
 
-			bool insufficientStock = false;
+		bool insufficientStock = false;
+		try
+		{
 			_unitOfWork.ExecuteInTransaction(() =>
 			{
 				// Validate every line against a fresh tracked read BEFORE writing anything,
@@ -225,6 +228,13 @@ namespace VaultShop.Web.Services.Checkout
 				}
 				_unitOfWork.Save();
 			});
+		}
+		catch (DbUpdateException ex)
+		{
+			// ponytail: only constraint in this transaction is CK_Products_StockQuantity_NonNegative — map to InsufficientStock
+			_logger.LogWarning(ex, "Checkout stock constraint violation for user {UserId} - concurrent stock exhausted.", userId);
+			insufficientStock = true;
+		}
 
 			if (insufficientStock)
 			{
