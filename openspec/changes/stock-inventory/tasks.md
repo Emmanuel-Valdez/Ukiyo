@@ -25,6 +25,6 @@
 
 ## 5. Tests & Verification
 
-- [ ] 5.1 Add `VaultShop.Tests/StockInventoryTests.cs` (or extend `CheckoutServiceTests`) covering: add-to-cart exceeds stock, Plus at limit, checkout success decrements, checkout single-line failure rolls back, concurrent-checkout not-negative invariant (sequential simulation) — verify `dotnet test` passes
-- [ ] 5.2 Extend `CartCheckoutHttpTests` (or add HTTP test) for insufficient-stock redirect path — verify `dotnet test` passes
-- [ ] 5.3 Run `dotnet test VaultShop.sln` full suite green and `dotnet build --no-restore` clean before marking change ready
+- [x] 5.1 Add `VaultShop.Tests/StockInventoryTests.cs` (or extend `CheckoutServiceTests`) covering: add-to-cart exceeds stock, Plus at limit, checkout success decrements, checkout single-line failure rolls back, concurrent-checkout not-negative invariant (sequential simulation) — verify `dotnet test` passes
+- [x] 5.2 Extend `CartCheckoutHttpTests` (or add HTTP test) for insufficient-stock redirect path — verify `dotnet test` passes
+- [x] 5.3 Run `dotnet test VaultShop.sln` full suite green and `dotnet build --no-restore` clean before marking change ready

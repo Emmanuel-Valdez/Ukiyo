@@ -303,6 +303,38 @@ public class CartCheckoutHttpTests
     }
 
     [Fact]
+    public async Task Plus_AtStockLimit_RedirectsToCartWithoutIncrementing()
+    {
+        using var factory = new CustomWebApplicationFactory();
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        // Cart is already at the stock limit (2 of 2): Plus must be rejected.
+        SeedProductAndCart(factory, factory.CustomerEmail, count: 2, retailPrice: 100m, wholesalePrice: 70m, stockQuantity: 2);
+        await TestAuthHelper.LoginAsync(client, factory.CustomerEmail, factory.TestPassword);
+
+        int cartId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            cartId = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().ShoppingCarts.AsNoTracking().Single().Id;
+        }
+
+        var token = await TestAuthHelper.GetAntiforgeryTokenAsync(client, "/en-US/Customer/Cart/Index");
+        var response = await client.PostAsync("/en-US/Customer/Cart/Plus", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token,
+            ["cartId"] = cartId.ToString(),
+        }));
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Contains("/Customer/Cart", response.Headers.Location!.ToString());
+
+        using var verifyScope = factory.Services.CreateScope();
+        var db = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.Equal(2, db.ShoppingCarts.AsNoTracking().Single().Count);
+        Assert.Equal(2, db.Products.AsNoTracking().Single().StockQuantity);
+    }
+
+    [Fact]
     public async Task SummaryPost_WithEmptyCart_RedirectsToIndexWithoutCreatingOrder()
     {
         using var factory = new CustomWebApplicationFactory();
