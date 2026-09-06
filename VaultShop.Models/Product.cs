@@ -39,6 +39,9 @@ namespace VaultShop.Models
         public int FeaturedSortOrder { get; set; } = 0;
         public bool IsDeleted { get; set; } = false;
 
+        [LocalizedRange(0, int.MaxValue, "Stock quantity cannot be negative.", "La cantidad en stock no puede ser negativa.")]
+        public int StockQuantity { get; set; } = 0;
+
 		[LocalizedRequired("Category is required.", "La categoría es obligatoria.")]
 		[LocalizedRange(1, int.MaxValue, "Category is required.", "La categoría es obligatoria.")]
 		public int CategoryId { get; set; }
