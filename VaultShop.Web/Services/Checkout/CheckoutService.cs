@@ -184,8 +184,30 @@ namespace VaultShop.Web.Services.Checkout
 				shoppingCartVM.OrderHeader.PaymentDueDate = DateOnly.FromDateTime(shoppingCartVM.OrderHeader.OrderDate.AddDays(SD.CompanyPaymentDueDays));
 			}
 
+			bool insufficientStock = false;
 			_unitOfWork.ExecuteInTransaction(() =>
 			{
+				// Validate every line against a fresh tracked read BEFORE writing anything,
+				// so a single failing line leaves no order/stock side-effects.
+				foreach (var cart in shoppingCartVM.ShoppingCartList)
+				{
+					var product = _unitOfWork.Product.Get(p => p.Id == cart.ProductId, tracked: true);
+					if (product == null || cart.Count > product.StockQuantity)
+					{
+						insufficientStock = true;
+						return;
+					}
+					cart.Product = product;
+				}
+
+				// ponytail: single-transaction re-read + decrement, no row lock — under high
+				// contention upgrade to SELECT FOR UPDATE or a RowVersion on Product.
+				foreach (var cart in shoppingCartVM.ShoppingCartList)
+				{
+					cart.Product.StockQuantity -= cart.Count;
+					_unitOfWork.Product.Update(cart.Product);
+				}
+
 				_unitOfWork.OrderHeader.Add(shoppingCartVM.OrderHeader);
 				_unitOfWork.Save();
 				_logger.LogInformation("Created order {OrderId} during checkout. UserId: {UserId}, CartItemCount: {CartItemCount}, OrderTotal: {OrderTotal}, PaymentStatus: {PaymentStatus}", shoppingCartVM.OrderHeader.Id, userId, shoppingCartVM.ShoppingCartList.Count(), shoppingCartVM.OrderHeader.OrderTotal, shoppingCartVM.OrderHeader.PaymentStatus);
@@ -203,6 +225,16 @@ namespace VaultShop.Web.Services.Checkout
 				}
 				_unitOfWork.Save();
 			});
+
+			if (insufficientStock)
+			{
+				return new CheckoutCreateOrderResult
+				{
+					InsufficientStock = true,
+					ShoppingCartVM = shoppingCartVM,
+					ApplicationUser = applicationUser,
+				};
+			}
 
 			return new CheckoutCreateOrderResult
 			{

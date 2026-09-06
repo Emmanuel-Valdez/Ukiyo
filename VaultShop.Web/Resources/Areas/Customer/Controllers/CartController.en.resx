@@ -126,4 +126,7 @@
   <data name="InvalidPaymentMethodError" xml:space="preserve">
     <value>Please choose a valid payment method.</value>
   </data>
+  <data name="NotEnoughStock" xml:space="preserve">
+    <value>Not enough stock available for this product.</value>
+  </data>
 </root>

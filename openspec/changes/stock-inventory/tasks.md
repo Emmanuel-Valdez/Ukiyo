@@ -6,22 +6,22 @@
 
 ## 2. Admin Stock Management
 
-- [ ] 2.1 Expose `StockQuantity` in `ProductController.GetAll` JSON and verify DataTables product list shows the stock column (manual browser check)
-- [ ] 2.2 Add stock number input (`min=0`) to `Areas/Admin/Views/Product/Upsert.cshtml` with server-side validation, and verify create/edit persists stock and rejects negative values with a validation message
-- [ ] 2.3 Add EN/ES localization for stock field labels and validation messages and verify both cultures render correctly
+- [x] 2.1 Expose `StockQuantity` in `ProductController.GetAll` JSON and verify DataTables product list shows the stock column (manual browser check)
+- [x] 2.2 Add stock number input (`min=0`) to `Areas/Admin/Views/Product/Upsert.cshtml` with server-side validation, and verify create/edit persists stock and rejects negative values with a validation message
+- [x] 2.3 Add EN/ES localization for stock field labels and validation messages and verify both cultures render correctly
 
 ## 3. Storefront Add-to-Cart & Cart Guards
 
-- [ ] 3.1 Guard `HomeController.Details` POST (add-to-cart): check `existingCartCount + requested > product.StockQuantity`, reject with localized `TempData["error"]` and verify adding beyond stock is blocked with the error message
-- [ ] 3.2 Guard `CartController.Plus`: reject increment when `cart.Count + 1 > product.StockQuantity` with localized error, keep `Minus`/`Remove` unrestricted, and verify via manual cart flow
-- [ ] 3.3 Show out-of-stock state on `Areas/Customer/Views/Home/Details.cshtml` (badge + disabled Add-to-Cart when `StockQuantity == 0`) and cap the quantity stepper `max=data-stock`, verify light/dark + mobile
+- [x] 3.1 Guard `HomeController.Details` POST (add-to-cart): check `existingCartCount + requested > product.StockQuantity`, reject with localized `TempData["error"]` and verify adding beyond stock is blocked with the error message
+- [x] 3.2 Guard `CartController.Plus`: reject increment when `cart.Count + 1 > product.StockQuantity` with localized error, keep `Minus`/`Remove` unrestricted, and verify via manual cart flow
+- [x] 3.3 Show out-of-stock state on `Areas/Customer/Views/Home/Details.cshtml` (badge + disabled Add-to-Cart when `StockQuantity == 0`) and cap the quantity stepper `max=data-stock`, verify light/dark + mobile
 
 ## 4. Checkout Atomic Validation & Decrement
 
-- [ ] 4.1 In `CheckoutService.CreateOrder`, inside `ExecuteInTransaction`, validate each cart line against fresh `Product.StockQuantity`, decrement stock on success, and return a new `InsufficientStock` result flag on failure with no order/stock side-effects — verify with unit test
-- [ ] 4.2 Handle `InsufficientStock` in `CartController.SummaryPOST`: redirect to `Cart/Index` with localized `TempData["error"]`, no `SessionId`/`OrderHeader` created — verify via integration test
-- [ ] 4.3 Ensure Company delayed-payment checkout also validates and decrements stock in the same transaction — verify with a company-role integration test
-- [ ] 4.4 Add `CHECK (StockQuantity >= 0)` DB constraint (via migration annotation) as a safety net and verify it appears in the generated migration SQL
+- [x] 4.1 In `CheckoutService.CreateOrder`, inside `ExecuteInTransaction`, validate each cart line against fresh `Product.StockQuantity`, decrement stock on success, and return a new `InsufficientStock` result flag on failure with no order/stock side-effects — verify with unit test
+- [x] 4.2 Handle `InsufficientStock` in `CartController.SummaryPOST`: redirect to `Cart/Index` with localized `TempData["error"]`, no `SessionId`/`OrderHeader` created — verify via integration test
+- [x] 4.3 Ensure Company delayed-payment checkout also validates and decrements stock in the same transaction — verify with a company-role integration test
+- [x] 4.4 Add `CHECK (StockQuantity >= 0)` DB constraint (via migration annotation) as a safety net and verify it appears in the generated migration SQL
 
 ## 5. Tests & Verification
 

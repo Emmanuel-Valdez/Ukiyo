@@ -156,6 +156,9 @@
   <data name="No" xml:space="preserve">
     <value>No</value>
   </data>
+  <data name="NotEnoughStock" xml:space="preserve">
+    <value>Not enough stock available for this product.</value>
+  </data>
   <data name="ProductAddCart" xml:space="preserve">
     <value>Product added to cart successfully!</value>
   </data>

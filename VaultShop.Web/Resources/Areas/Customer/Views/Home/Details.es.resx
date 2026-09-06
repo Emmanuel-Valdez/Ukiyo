@@ -156,4 +156,7 @@
   <data name="MetaKeywordsSuffix" xml:space="preserve">
     <value>diseño textil, confección, bordado, estampado, personalización</value>
   </data>
+  <data name="OutOfStock" xml:space="preserve">
+    <value>Sin stock</value>
+  </data>
 </root>

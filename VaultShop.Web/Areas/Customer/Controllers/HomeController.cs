@@ -125,6 +125,15 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 				return RedirectToAction(nameof(Index));
 			}
 
+			// ponytail: guard at write edges only, not cart read (design.md decision 2)
+			var existingCartCount = _unitOfWork.ShoppingCart
+				.Get(u => u.ApplicationUserId == userId && u.ProductId == shoppingCart.ProductId)?.Count ?? 0;
+			if (existingCartCount + shoppingCart.Count > product.StockQuantity)
+			{
+				TempData["error"] = _localizer["NotEnoughStock"].Value;
+				return RedirectToAction(nameof(Details), new { productId = shoppingCart.ProductId });
+			}
+
 			ShoppingCart? cartFromDb = _unitOfWork.ShoppingCart
 				.Get(u => u.ApplicationUserId == userId && u.ProductId == shoppingCart.ProductId && u.Product.IsDeleted == false && u.Product.IsAvailableInStore == true);
 			if (cartFromDb != null)

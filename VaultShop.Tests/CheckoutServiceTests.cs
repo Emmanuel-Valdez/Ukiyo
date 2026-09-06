@@ -122,6 +122,69 @@ namespace VaultShop.Web.Tests
 		}
 
 		[Fact]
+		public void CreateOrder_ValidCart_DecrementsStockPerLine()
+		{
+			var carts = new[]
+			{
+				CreateCart("user-1", productId: 10, count: 2, retailPrice: 100m, wholesalePrice: 70m, stockQuantity: 5),
+				CreateCart("user-1", productId: 11, count: 1, retailPrice: 50m, wholesalePrice: 35m, stockQuantity: 3)
+			};
+			var unitOfWork = CreateUnitOfWork(carts, [CreateUser("user-1")]);
+			var service = CreateService(unitOfWork.Mock.Object);
+
+			var result = service.CreateOrder("user-1", new OrderHeader(), useWholesalePrice: false);
+
+			Assert.False(result.InsufficientStock);
+			Assert.Equal(3, carts[0].Product.StockQuantity);
+			Assert.Equal(2, carts[1].Product.StockQuantity);
+			unitOfWork.ProductMock.Verify(x => x.Update(It.IsAny<Product>()), Times.Exactly(2));
+		}
+
+		[Fact]
+		public void CreateOrder_InsufficientStock_ReturnsFlagAndNoSideEffects()
+		{
+			var carts = new[]
+			{
+				CreateCart("user-1", productId: 10, count: 2, retailPrice: 100m, wholesalePrice: 70m, stockQuantity: 5),
+				CreateCart("user-1", productId: 11, count: 2, retailPrice: 50m, wholesalePrice: 35m, stockQuantity: 1)
+			};
+			var unitOfWork = CreateUnitOfWork(carts, [CreateUser("user-1")]);
+			var service = CreateService(unitOfWork.Mock.Object);
+
+			var result = service.CreateOrder("user-1", new OrderHeader(), useWholesalePrice: false);
+
+			Assert.True(result.InsufficientStock);
+			Assert.Null(result.OrderId);
+			// First line was valid but nothing may persist: no order, no details, no saves, no decrement.
+			unitOfWork.OrderHeaderMock.Verify(x => x.Add(It.IsAny<OrderHeader>()), Times.Never);
+			unitOfWork.OrderDetailMock.Verify(x => x.Add(It.IsAny<OrderDetail>()), Times.Never);
+			unitOfWork.Mock.Verify(x => x.Save(), Times.Never);
+			unitOfWork.ProductMock.Verify(x => x.Update(It.IsAny<Product>()), Times.Never);
+			Assert.Equal(5, carts[0].Product.StockQuantity);
+			Assert.Equal(1, carts[1].Product.StockQuantity);
+		}
+
+		[Fact]
+		public void CreateOrder_ValidCompanyUser_DecrementsStock()
+		{
+			var carts = new[]
+			{
+				CreateCart("user-1", productId: 10, count: 2, retailPrice: 100m, wholesalePrice: 70m, stockQuantity: 5)
+			};
+			var unitOfWork = CreateUnitOfWork(
+				carts,
+				[CreateUser("user-1", companyId: 7)],
+				[CreateCompany(7)]);
+			var service = CreateService(unitOfWork.Mock.Object);
+
+			var result = service.CreateOrder("user-1", new OrderHeader { PaymentMethod = SD.PaymentMethodBankTransfer }, useWholesalePrice: false);
+
+			Assert.False(result.InsufficientStock);
+			Assert.Equal(3, carts[0].Product.StockQuantity);
+			unitOfWork.ProductMock.Verify(x => x.Update(It.IsAny<Product>()), Times.Once);
+		}
+
+		[Fact]
 		public void CreateOrder_OrderDetailCreationFails_RethrowsException()
 		{
 			var carts = new[]
@@ -149,6 +212,7 @@ namespace VaultShop.Web.Tests
 			var shoppingCartList = shoppingCarts.ToList();
 			var userList = users.ToList();
 			var companyList = (companies ?? []).ToList();
+			var productList = shoppingCartList.Select(cart => cart.Product).ToList();
 
 			testUnitOfWork.ShoppingCartMock
 				.Setup(x => x.GetAll(
@@ -170,6 +234,13 @@ namespace VaultShop.Web.Tests
 					It.IsAny<string?>(),
 					It.IsAny<bool>()))
 				.Returns((Expression<Func<Company, bool>> filter, string? _, bool _) => companyList.SingleOrDefault(filter.Compile()));
+
+			testUnitOfWork.ProductMock
+				.Setup(x => x.Get(
+					It.IsAny<Expression<Func<Product, bool>>>(),
+					It.IsAny<string?>(),
+					It.IsAny<bool>()))
+				.Returns((Expression<Func<Product, bool>> filter, string? _, bool _) => productList.SingleOrDefault(filter.Compile()));
 
 			testUnitOfWork.OrderHeaderMock
 				.Setup(x => x.Add(It.IsAny<OrderHeader>()))
@@ -200,11 +271,12 @@ namespace VaultShop.Web.Tests
 			testUnitOfWork.Mock.Setup(x => x.Company).Returns(testUnitOfWork.CompanyMock.Object);
 			testUnitOfWork.Mock.Setup(x => x.OrderHeader).Returns(testUnitOfWork.OrderHeaderMock.Object);
 			testUnitOfWork.Mock.Setup(x => x.OrderDetail).Returns(testUnitOfWork.OrderDetailMock.Object);
+			testUnitOfWork.Mock.Setup(x => x.Product).Returns(testUnitOfWork.ProductMock.Object);
 
 			return testUnitOfWork;
 		}
 
-		private static ShoppingCart CreateCart(string userId, int productId, int count, decimal retailPrice, decimal wholesalePrice)
+		private static ShoppingCart CreateCart(string userId, int productId, int count, decimal retailPrice, decimal wholesalePrice, int stockQuantity = 100)
 		{
 			return new ShoppingCart
 			{
@@ -217,7 +289,8 @@ namespace VaultShop.Web.Tests
 					IsDeleted = false,
 					IsAvailableInStore = true,
 					FinalRetailPrice = retailPrice,
-					FinalWholesalePrice = wholesalePrice
+					FinalWholesalePrice = wholesalePrice,
+					StockQuantity = stockQuantity
 				}
 			};
 		}
@@ -248,6 +321,7 @@ namespace VaultShop.Web.Tests
 			public Mock<IShoppingCartRepository> ShoppingCartMock { get; } = new();
 			public Mock<IApplicationUserRepository> ApplicationUserMock { get; } = new();
 			public Mock<ICompanyRepository> CompanyMock { get; } = new();
+			public Mock<IProductRepository> ProductMock { get; } = new();
 			public Mock<IOrderHeaderRepository> OrderHeaderMock { get; } = new();
 			public Mock<IOrderDetailRepository> OrderDetailMock { get; } = new();
 			public List<OrderHeader> AddedOrderHeaders { get; } = [];

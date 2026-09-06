@@ -34,8 +34,9 @@ namespace VaultShop.DataAccess.Repository
                 objFromDB.ProductImages = obj.ProductImages;
                 objFromDB.IsDeleted = obj.IsDeleted;
                 objFromDB.IsAvailableInStore= obj.IsAvailableInStore;
-                objFromDB.IsFeatured = obj.IsFeatured;
-                objFromDB.FeaturedSortOrder = obj.FeaturedSortOrder;
+				objFromDB.IsFeatured = obj.IsFeatured;
+				objFromDB.FeaturedSortOrder = obj.FeaturedSortOrder;
+				objFromDB.StockQuantity = obj.StockQuantity;
                 //if(obj.ImageUrl!= null)
                 //{
                 //    objFromDB.ImageUrl = obj.ImageUrl;

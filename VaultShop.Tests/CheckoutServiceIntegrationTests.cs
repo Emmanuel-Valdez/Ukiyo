@@ -45,6 +45,31 @@ namespace VaultShop.Web.Tests
 			Assert.Equal(10, orderDetail.ProductId);
 			Assert.Equal(2, orderDetail.Count);
 			Assert.Equal(100m, orderDetail.Price);
+			Assert.Equal(8, verificationContext.Products.AsNoTracking().Single(p => p.Id == 10).StockQuantity);
+		}
+
+		[Fact]
+		public void CreateOrder_WithInsufficientStock_ReturnsFlagAndPersistsNothing()
+		{
+			using var connection = CreateOpenConnection();
+			var options = CreateOptions(connection);
+			EnsureDatabaseCreated(options);
+			SeedCheckoutCart(options, "user-1", productId: 10, count: 20, stockQuantity: 5);
+
+			using (var context = new ApplicationDbContext(options))
+			{
+				var service = CreateService(context);
+
+				var result = service.CreateOrder("user-1", CreatePostedOrderHeader(), useWholesalePrice: false);
+
+				Assert.True(result.InsufficientStock);
+				Assert.Null(result.OrderId);
+			}
+
+			using var verificationContext = new ApplicationDbContext(options);
+			Assert.Empty(verificationContext.OrderHeaders.AsNoTracking());
+			Assert.Empty(verificationContext.OrderDetails.AsNoTracking());
+			Assert.Equal(5, verificationContext.Products.AsNoTracking().Single(p => p.Id == 10).StockQuantity);
 		}
 
 		[Fact]
@@ -95,6 +120,7 @@ namespace VaultShop.Web.Tests
 			var order = verifyContext.OrderHeaders.Single();
 			Assert.Equal("Textiles SA SRL", order.RazonSocialSnapshot);
 			Assert.Equal("Av. Corrientes 1234, CABA", order.DomicilioFiscalSnapshot);
+			Assert.Equal(8, verifyContext.Products.AsNoTracking().Single(p => p.Id == 10).StockQuantity);
 
 			var summaryService = new OrderSummaryService(new UnitOfWork(verifyContext), new OrderAccessPolicy(new UnitOfWork(verifyContext)));
 			var principal = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "user-1")]));
@@ -157,7 +183,7 @@ namespace VaultShop.Web.Tests
 			context.Database.EnsureCreated();
 		}
 
-		private static void SeedCheckoutCart(DbContextOptions<ApplicationDbContext> options, string userId, int productId, int count)
+		private static void SeedCheckoutCart(DbContextOptions<ApplicationDbContext> options, string userId, int productId, int count, int stockQuantity = 10)
 		{
 			using var context = new ApplicationDbContext(options);
 			var category = new Category
@@ -178,6 +204,7 @@ namespace VaultShop.Web.Tests
 				FinalWholesalePrice = 70m,
 				IsAvailableInStore = true,
 				IsDeleted = false,
+				StockQuantity = stockQuantity,
 			};
 
 			var user = new ApplicationUser
@@ -249,6 +276,7 @@ namespace VaultShop.Web.Tests
 				FinalWholesalePrice = 70m,
 				IsAvailableInStore = true,
 				IsDeleted = false,
+				StockQuantity = 10,
 			};
 
 			var company = new Company

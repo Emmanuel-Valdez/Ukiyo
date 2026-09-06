@@ -25,6 +25,7 @@ function loadDataTable() {
             { data: 'finalWholesalePrice', render: window.SpanishNumberTables(culture) },
             { data: 'finalRetailPrice', render: window.SpanishNumberTables(culture) },
             { data: 'category.name' },
+            { data: 'stockQuantity' },
             {
 
                 data: { id: 'id', isAvailableInStore: 'isAvailableInStore' },
@@ -66,8 +67,8 @@ function loadDataTable() {
             }
         },
         "columnDefs": [
-            { responsivePriority: 1, targets: 7},
-            { responsivePriority: 2, targets: 6},
+            { responsivePriority: 1, targets: 8},
+            { responsivePriority: 2, targets: 7},
             { responsivePriority: 3, targets: 1 },
             { responsivePriority: 4, targets: 4 }
         ]

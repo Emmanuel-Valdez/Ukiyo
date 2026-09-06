@@ -95,6 +95,10 @@
 						{
 							<span class="product-detail__badge badge rounded-pill mb-3">@Model.Product.Category.Name</span>
 						}
+						@if (Model.Product.StockQuantity == 0)
+						{
+							<span class="product-detail__badge badge rounded-pill mb-3">@Localizer["OutOfStock"]</span>
+						}
 						<h1 id="product-title" class="storefront-display-heading display-6 text-primary fw-semibold mb-2">@Model.Product.Name</h1>
 						<p class="product-card__meta mb-4">@Localizer["InspiredBy"]</p>
 
@@ -118,7 +122,7 @@
 						</div>
 
 						<div class="product-detail__purchase">
-							<div class="product-detail__stepper" role="group" aria-label="@Localizer["Count"]">
+							<div class="product-detail__stepper" role="group" aria-label="@Localizer["Count"]" data-stock="@Model.Product.StockQuantity">
 								<button type="button" class="product-detail__step product-detail__step--minus" data-quantity-step="-1" aria-label="@Localizer["DecreaseQuantity"]">
 									<i class="bi bi-dash-lg" aria-hidden="true"></i>
 								</button>
@@ -128,7 +132,13 @@
 								</button>
 							</div>
 							<div class="product-detail__actions">
-								@if ((User.IsInRole(SD.Role_Admin) || User.IsInRole(SD.Role_Employee) || User.IsInRole(SD.Role_Company)) && Model.Product.FinalWholesalePrice == 0)
+								@if (Model.Product.StockQuantity == 0)
+								{
+									<button type="button" disabled class="btn btn-danger disabled bg-gradient py-2 text-uppercase fw-semibold product-detail__add-button">
+										@Localizer["OutOfStock"]
+									</button>
+								}
+								else if ((User.IsInRole(SD.Role_Admin) || User.IsInRole(SD.Role_Employee) || User.IsInRole(SD.Role_Company)) && Model.Product.FinalWholesalePrice == 0)
 								{
 									<button class="btn btn-danger disabled bg-gradient py-2 text-uppercase fw-semibold product-detail__add-button">
 										@Localizer["TemporarilyUnavailable"]
@@ -174,15 +184,24 @@
 			if (!stepper) return;
 			var input = stepper.querySelector('.product-detail__quantity-input');
 			var minus = stepper.querySelector('[data-quantity-step="-1"]');
+			var plus = stepper.querySelector('[data-quantity-step="1"]');
+			var max = parseInt(stepper.dataset.stock, 10);
+			if (max > 0) { input.max = max; }
+			var clamp = function (v) {
+				var min = parseInt(input.min, 10) || 1;
+				if (max > 0 && v > max) v = max;
+				return Math.max(min, v);
+			};
 			var update = function () {
 				var min = parseInt(input.min, 10) || 1;
-				minus.disabled = (parseInt(input.value, 10) || min) <= min;
+				var value = parseInt(input.value, 10) || min;
+				minus.disabled = value <= min;
+				if (max > 0) { plus.disabled = value >= max; }
 			};
 			document.addEventListener('click', function (e) {
 				var btn = e.target.closest('.product-detail__step');
 				if (!btn || !stepper.contains(btn)) return;
-				var min = parseInt(input.min, 10) || 1;
-				input.value = Math.max(min, (parseInt(input.value, 10) || min) + (parseInt(btn.dataset.quantityStep, 10) || 0));
+				input.value = clamp((parseInt(input.value, 10) || 1) + (parseInt(btn.dataset.quantityStep, 10) || 0));
 				update();
 				input.dispatchEvent(new Event('input', { bubbles: true }));
 			});

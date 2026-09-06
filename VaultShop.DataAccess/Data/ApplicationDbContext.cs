@@ -46,6 +46,10 @@ namespace VaultShop.DataAccess.Data
 			modelBuilder.Entity<PercentageCostWholesale>()
 				.ToTable("PercentageCostsWholesale");
 
+			// Safety net for the checkout decrement; UX validation lives in CheckoutService.
+			modelBuilder.Entity<Product>()
+				.ToTable(t => t.HasCheckConstraint("CK_Products_StockQuantity_NonNegative", "\"StockQuantity\" >= 0"));
+
 			//Columns calculated automatically when update prices
 			modelBuilder.Entity<Packaging>()
 				.Property(o => o.UnitPrice)

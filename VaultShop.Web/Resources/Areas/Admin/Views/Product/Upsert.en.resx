@@ -171,6 +171,9 @@
   <data name="SetAsCover" xml:space="preserve">
     <value>Set as cover</value>
   </data>
+  <data name="StockQuantity" xml:space="preserve">
+    <value>Stock quantity</value>
+  </data>
   <data name="Update" xml:space="preserve">
     <value>Update</value>
   </data>

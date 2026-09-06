@@ -172,6 +172,11 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 				TempData["error"] = _localizer["OrderTotalZeroError"].Value;
 				return RedirectToAction(nameof(Index));
 			}
+			if (result.InsufficientStock)
+			{
+				TempData["error"] = _localizer["NotEnoughStock"].Value;
+				return RedirectToAction(nameof(Index));
+			}
 
 			if (result.OrderId is null || result.ShoppingCartVM is null)
 			{
@@ -336,6 +341,14 @@ namespace VaultShop.Web.Areas.Customer.Controllers
 			if (!UserCanAccessCart(cartFromDb))
 			{
 				return NotFound();
+			}
+
+			// ponytail: guard at write edges only, not cart read (design.md decision 2)
+			var product = _unitOfWork.Product.Get(u => u.Id == cartFromDb.ProductId);
+			if (product != null && cartFromDb.Count + 1 > product.StockQuantity)
+			{
+				TempData["error"] = _localizer["NotEnoughStock"].Value;
+				return RedirectToAction(nameof(Index));
 			}
 
 			cartFromDb.Count += 1;

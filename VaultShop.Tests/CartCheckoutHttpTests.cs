@@ -259,6 +259,50 @@ public class CartCheckoutHttpTests
     }
 
     [Fact]
+    public async Task SummaryPost_AsCustomer_WithInsufficientStock_RedirectsToCartWithoutCreatingOrder()
+    {
+        using var factory = new CustomWebApplicationFactory();
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        SeedProductAndCart(factory, factory.CustomerEmail, count: 2, retailPrice: 100m, wholesalePrice: 70m, stockQuantity: 1);
+
+        await TestAuthHelper.LoginAsync(client, factory.CustomerEmail, factory.TestPassword);
+        var token = await TestAuthHelper.GetAntiforgeryTokenAsync(client, "/en-US/Customer/Cart/Summary");
+
+        var response = await PostSummary(client, token);
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Contains("/Customer/Cart", response.Headers.Location!.ToString());
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.Empty(db.OrderHeaders.AsNoTracking());
+        Assert.Equal(1, db.Products.AsNoTracking().Single().StockQuantity);
+    }
+
+    [Fact]
+    public async Task SummaryPost_AsCompany_DecrementsStock()
+    {
+        using var factory = new CustomWebApplicationFactory();
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        SeedProductAndCart(factory, factory.CompanyEmail, count: 3, retailPrice: 100m, wholesalePrice: 70m, stockQuantity: 5);
+
+        await TestAuthHelper.LoginAsync(client, factory.CompanyEmail, factory.TestPassword);
+        var token = await TestAuthHelper.GetAntiforgeryTokenAsync(client, "/en-US/Customer/Cart/Summary");
+
+        var response = await PostSummary(client, token, SD.PaymentMethodBankTransfer);
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Contains("/Cart/OrderConfirmation", response.Headers.Location!.ToString());
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.Single(db.OrderHeaders.AsNoTracking());
+        Assert.Equal(2, db.Products.AsNoTracking().Single().StockQuantity);
+    }
+
+    [Fact]
     public async Task SummaryPost_WithEmptyCart_RedirectsToIndexWithoutCreatingOrder()
     {
         using var factory = new CustomWebApplicationFactory();
@@ -313,7 +357,7 @@ public class CartCheckoutHttpTests
         return await client.PostAsync("/en-US/Customer/Cart/Summary", new FormUrlEncodedContent(form));
     }
 
-    private static void SeedProductAndCart(WebApplicationFactory<Program> factory, string email, int count, decimal retailPrice, decimal wholesalePrice)
+    private static void SeedProductAndCart(WebApplicationFactory<Program> factory, string email, int count, decimal retailPrice, decimal wholesalePrice, int stockQuantity = 100)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -335,6 +379,7 @@ public class CartCheckoutHttpTests
             FinalWholesalePrice = wholesalePrice,
             IsAvailableInStore = true,
             IsDeleted = false,
+            StockQuantity = stockQuantity,
         };
         db.Categories.Add(category);
         db.Products.Add(product);
