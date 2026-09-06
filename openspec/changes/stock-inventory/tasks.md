@@ -28,3 +28,11 @@
 - [x] 5.1 Add `VaultShop.Tests/StockInventoryTests.cs` (or extend `CheckoutServiceTests`) covering: add-to-cart exceeds stock, Plus at limit, checkout success decrements, checkout single-line failure rolls back, concurrent-checkout not-negative invariant (sequential simulation) — verify `dotnet test` passes
 - [x] 5.2 Extend `CartCheckoutHttpTests` (or add HTTP test) for insufficient-stock redirect path — verify `dotnet test` passes
 - [x] 5.3 Run `dotnet test VaultShop.sln` full suite green and `dotnet build --no-restore` clean before marking change ready
+
+## 6. Review Fixes (post-review corrections before archive)
+
+- [ ] 6.1 Backfill existing stock: add `UPDATE "Products" SET "StockQuantity" = 10 WHERE "IsDeleted" = false` via migration (or idempotent `DbInitializer` seed) so pre-migration products with availability are sellable after deploy — verify `SELECT COUNT(*) FROM "Products" WHERE "IsDeleted" = false AND "StockQuantity" = 0` returns 0 post-migration
+- [ ] 6.2 Map `DbUpdateException` from the `CK_Products_StockQuantity_NonNegative` check constraint (in `CheckoutService.CreateOrder`, inside the transaction) to `InsufficientStock = true` with a `Warning`-level log instead of surfacing a 500 — verify concurrent second checkout on last unit redirects to cart with localized error (integration test forcing the constraint, e.g. Testcontainers PG or direct constraint violation)
+- [ ] 6.3 Fix `CartController.Plus` guard: filter `Product.Get(u => u.Id == cart.ProductId && !u.IsDeleted && u.IsAvailableInStore)` and treat `product == null` as insufficient stock (localized error, no increment) — verify with a unit test mirroring `HomeControllerAddToCartStockTests`
+- [ ] 6.4 Reject tampered quantities: in `HomeController.Details` POST, explicitly reject `shoppingCart.Count < 1` (before the stock check) with localized error + redirect — verify `Count = 0` and `Count = -5` POSTs do not mutate cart/stock
+- [ ] 6.5 Add boundary theory tests to `HomeControllerAddToCartStockTests`: `(existing:0, requested:1, stock:1, succeeds)` / `(existing:2, requested:1, stock:2, rejected)` / `(existing:0, requested:1, stock:0, rejected)` plus `Plus_BelowLimit_Increments` and `Product_StockQuantity_Negative_FailsValidation` — verify `dotnet test` passes
